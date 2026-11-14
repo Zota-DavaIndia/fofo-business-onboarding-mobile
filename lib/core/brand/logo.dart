@@ -1,62 +1,75 @@
+import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../theme/app_theme.dart';
 import 'logo_paths.g.dart';
 
-/// The davaindia wordmark with "fa" under its right end, the same artwork
-/// as the app icon. Drawn from vector paths, so it stays sharp at any size.
+/// The davaindia wordmark with a small "fa" tag beside it. [height] is the
+/// height of the wordmark letters; the tag is sized from it. Both are drawn
+/// from the same vector outlines as the app icon.
 class AppLogo extends StatelessWidget {
-  const AppLogo({super.key, this.height = 40});
+  const AppLogo({super.key, this.height = 20});
 
   final double height;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final width = height * logoSize.width / logoSize.height;
+    final h = height;
+    final faHeight = h * 0.62;
     return Semantics(
       label: 'Dava India field app',
       image: true,
-      child: CustomPaint(
-        size: Size(width, height),
-        painter: _LogoPainter(dava: c.brandOrange, india: c.brandGreen, fa: c.accent),
+      excludeSemantics: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CustomPaint(
+            size: Size(h * wordmarkSize.width / wordmarkSize.height, h),
+            painter: _PathsPainter(wordmarkSize, [(wordmarkDava, c.brandOrange), (wordmarkIndia, c.brandGreen)]),
+          ),
+          SizedBox(width: h * 0.32),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: h * 0.36, vertical: h * 0.22),
+            decoration: BoxDecoration(color: c.accentTint, borderRadius: BorderRadius.circular(h * 0.3)),
+            child: CustomPaint(
+              size: Size(faHeight * faSize.width / faSize.height, faHeight),
+              painter: _PathsPainter(faSize, [(faMark, c.accent)]),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _LogoPainter extends CustomPainter {
-  _LogoPainter({required this.dava, required this.india, required this.fa});
+typedef _PathBuilder = void Function(Path);
 
-  final Color dava;
-  final Color india;
-  final Color fa;
+class _PathsPainter extends CustomPainter {
+  _PathsPainter(this.box, this.parts);
 
-  static final _dava = Path();
-  static final _india = Path();
-  static final _fa = Path();
-  static bool _built = false;
+  final Size box;
+  final List<(_PathBuilder, Color)> parts;
 
-  static void _build() {
-    if (_built) return;
-    logoDava(_dava);
-    logoIndia(_india);
-    logoFa(_fa);
-    _built = true;
-  }
+  static final _cache = <_PathBuilder, Path>{};
 
   @override
   void paint(Canvas canvas, Size size) {
-    _build();
     canvas.save();
-    canvas.scale(size.height / logoSize.height);
+    canvas.scale(size.height / box.height);
     final paint = Paint()..isAntiAlias = true;
-    canvas.drawPath(_dava, paint..color = dava);
-    canvas.drawPath(_india, paint..color = india);
-    canvas.drawPath(_fa, paint..color = fa);
+    for (final (build, color) in parts) {
+      final path = _cache.putIfAbsent(build, () {
+        final p = Path();
+        build(p);
+        return p;
+      });
+      canvas.drawPath(path, paint..color = color);
+    }
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(_LogoPainter old) => old.dava != dava || old.india != india || old.fa != fa;
+  bool shouldRepaint(_PathsPainter old) =>
+      old.box != box || !listEquals([for (final p in old.parts) p.$2], [for (final p in parts) p.$2]);
 }
