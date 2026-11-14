@@ -89,9 +89,10 @@ List<String> svgToCalls(String svg) {
 
 /// Converts SVG path data to absolute Flutter Path calls.
 List<String> pathToCalls(String d) {
-  final tokens = RegExp(
-    r'[MmLlHhVvCcSsQqTtAaZz]|-?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?',
-  ).allMatches(d).map((m) => m.group(0)!).toList();
+  final tokens = RegExp(r'[MmLlHhVvCcSsQqTtAaZz]|-?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?')
+      .allMatches(d)
+      .map((m) => m.group(0)!)
+      .toList();
 
   final out = <String>[];
   var i = 0;
