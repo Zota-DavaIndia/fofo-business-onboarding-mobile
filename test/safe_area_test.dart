@@ -23,7 +23,9 @@ Future<double> _pump(WidgetTester tester, double inset, Widget child) async {
 }
 
 Widget _checkOut() => PageBody(
-  bottom: ActionBar(children: [AppButton(label: 'Check out', onPressed: () {})]),
+  bottom: ActionBar(
+    children: [AppButton(label: 'Check out', onPressed: () {})],
+  ),
   children: const [Text('Outcome')],
 );
 
@@ -63,23 +65,15 @@ void main() {
     });
   }
 
-  testWidgets(
-    'iOS: the action bar button sits just above the home indicator',
-    (tester) async {
-      final screen = await _pump(tester, _iosHomeIndicator, _checkOut());
-      final bottom = tester.getRect(find.byType(AppButton)).bottom;
-      // The indicator strip is see-through, so the inset is the gap; no extra space stacked on it.
-      expect(bottom, screen - _iosHomeIndicator);
-    },
-    variant: const TargetPlatformVariant({TargetPlatform.iOS}),
-  );
+  testWidgets('iOS: the action bar button sits just above the home indicator', (tester) async {
+    final screen = await _pump(tester, _iosHomeIndicator, _checkOut());
+    final bottom = tester.getRect(find.byType(AppButton)).bottom;
+    // The indicator strip is see-through, so the inset is the gap; no extra space stacked on it.
+    expect(bottom, screen - _iosHomeIndicator);
+  }, variant: const TargetPlatformVariant({TargetPlatform.iOS}));
 
-  testWidgets(
-    'iOS without a home indicator still leaves a gap',
-    (tester) async {
-      final screen = await _pump(tester, 0, _checkOut());
-      expect(screen - tester.getRect(find.byType(AppButton)).bottom, Space.lg);
-    },
-    variant: const TargetPlatformVariant({TargetPlatform.iOS}),
-  );
+  testWidgets('iOS without a home indicator still leaves a gap', (tester) async {
+    final screen = await _pump(tester, 0, _checkOut());
+    expect(screen - tester.getRect(find.byType(AppButton)).bottom, Space.lg);
+  }, variant: const TargetPlatformVariant({TargetPlatform.iOS}));
 }
