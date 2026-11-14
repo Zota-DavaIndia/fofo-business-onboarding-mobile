@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/session.dart';
+import '../../core/sync/live_refresh.dart';
 
 /// Lead counts for the signed-in user, from `GET /dashboard`.
 class Dashboard {
@@ -30,6 +31,7 @@ class Dashboard {
 }
 
 final dashboardProvider = FutureProvider.autoDispose<Dashboard>((ref) async {
+  ref.watch(liveSignalProvider(LiveTopic.dashboard));
   final res = await ref.watch(apiClientProvider).get<Object?>('/dashboard');
   return Dashboard.fromJson(res.data);
 });

@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/auth/session.dart';
 import '../core/icons/app_icon.dart';
+import '../core/sync/live_refresh.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/tokens.dart';
 import 'modules.dart';
@@ -23,25 +24,27 @@ class TabShell extends ConsumerWidget {
         if (user != null && tabModules[i].allows(user)) (index: i, module: tabModules[i]),
     ];
 
-    return Scaffold(
-      body: shell,
-      bottomNavigationBar: ColoredBox(
-        color: context.colors.card,
-        child: SafeArea(
-          top: false,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: Sizes.tabBar),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final t in visible)
-                  _Tab(
-                    module: t.module,
-                    selected: shell.currentIndex == t.index,
-                    onTap: () => shell.goBranch(t.index, initialLocation: shell.currentIndex == t.index),
-                  ),
-              ],
+    return LiveRefresh(
+      child: Scaffold(
+        body: shell,
+        bottomNavigationBar: ColoredBox(
+          color: context.colors.card,
+          child: SafeArea(
+            top: false,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: Sizes.tabBar),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final t in visible)
+                    _Tab(
+                      module: t.module,
+                      selected: shell.currentIndex == t.index,
+                      onTap: () => shell.goBranch(t.index, initialLocation: shell.currentIndex == t.index),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

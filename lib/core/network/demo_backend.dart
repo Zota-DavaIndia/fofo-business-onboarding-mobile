@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 /// simulator without the CRM running. Only used when APP_ENV is `demo`;
 /// any password works.
 class DemoBackend extends Interceptor {
+  int _dashboardCalls = 0;
+
   static const _user = {
     'id': 1,
     'name': 'Arjun Kumar',
@@ -57,7 +59,8 @@ class DemoBackend extends Interceptor {
         data = {
           'success': true,
           'data': {
-            'by_status': {'ASSIGNED': 4, 'VISIT_SCHEDULED': 3, 'FOLLOW_UP': 2, 'QUALIFIED': 1},
+            // Changes on each call so refreshes are visible in demo mode.
+            'by_status': {'ASSIGNED': 4 + _dashboardCalls++ % 3, 'VISIT_SCHEDULED': 3, 'FOLLOW_UP': 2, 'QUALIFIED': 1},
           },
         };
       default:
