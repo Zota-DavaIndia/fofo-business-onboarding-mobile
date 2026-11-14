@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +9,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/page.dart';
 import '../../core/widgets/widgets.dart';
+import '../../core/brand/logo.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -75,7 +76,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
       children: [
         const SizedBox(height: Space.xxl),
-        const Wordmark(size: 26),
+        const AppLogo(height: 56),
         const SizedBox(height: Space.xxl),
         Text('Sign in', style: context.text.title),
         Text('Use the account your admin set up for you.', style: context.text.secondary),

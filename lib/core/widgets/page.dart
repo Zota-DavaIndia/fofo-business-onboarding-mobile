@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
@@ -32,35 +32,6 @@ class PageBody extends StatelessWidget {
     return Scaffold(
       body: SafeArea(bottom: bottom == null, child: list),
       bottomNavigationBar: bottom,
-    );
-  }
-}
-
-/// Text version of the Dava India wordmark. Replace with the official
-/// logo artwork when the brand team supplies an SVG.
-class Wordmark extends StatelessWidget {
-  const Wordmark({super.key, this.size = 19});
-
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    final style = TextStyle(fontSize: size, fontWeight: FontWeight.w700, letterSpacing: -0.3, height: 1.1);
-    return Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(
-            text: 'dava',
-            style: style.copyWith(color: c.brandOrange),
-          ),
-          TextSpan(
-            text: 'india',
-            style: style.copyWith(color: c.brandGreen),
-          ),
-        ],
-      ),
-      semanticsLabel: 'Dava India',
     );
   }
 }
