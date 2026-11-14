@@ -1,16 +1,18 @@
-"""Builds the launcher icon for Android and iOS from glyph outlines.
+"""Builds the launcher icon and the in-app logo from glyph outlines.
 
-The icon is the davaindia wordmark (Roboto Bold) with "fa" (Roboto Black
-Italic) right-aligned under it. Letters are converted to vector paths, so
-no font ships with the app. Roboto is Apache-2.0 and comes with Flutter.
+The logo is the davaindia wordmark (Montserrat Bold) with "fa" (Montserrat
+ExtraBold Italic). Text is shaped with HarfBuzz so kerning matches what the
+font intends, then converted to vector paths: the icon PNGs and the Dart
+code for the in-app logo need no font at runtime. Montserrat is under the
+SIL Open Font License (see scripts/app_icon/fonts/OFL.txt).
 
-Needs fontTools (pip install fonttools), rsvg-convert and ImageMagick.
+Needs fontTools and uharfbuzz (pip install fonttools uharfbuzz),
+rsvg-convert and ImageMagick.
 
     python3 scripts/app_icon/generate.py
 """
 
 import json
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -19,10 +21,13 @@ from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.ttLib import TTFont
+import uharfbuzz as hb
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = Path(__file__).resolve().parent / "out"
-FONTS = Path(shutil.which("flutter")).resolve().parent / "cache" / "artifacts" / "material_fonts"
+WORDMARK_FONT = ROOT / "assets/fonts/montserrat/Montserrat-Bold.ttf"
+FA_FONT = Path(__file__).resolve().parent / "fonts/Montserrat-ExtraBoldItalic.ttf"
+WORDMARK_TRACKING = -0.035  # em; Montserrat is wide, tighten the wordmark a little
 
 LIGHT = {"bg": "#FFFFFF", "orange": "#FC8448", "green": "#5A782A", "clay": "#A4441A"}
 DARK = {"bg": "#1D1916", "orange": "#FC8448", "green": "#9BBE5C", "clay": "#F49A6A"}
@@ -34,23 +39,35 @@ GAP = 0.10  # space between the lines, as a share of the wordmark size
 
 
 class Text:
-    """A run of glyphs from one font, positioned in font units (y up)."""
+    """A run of glyphs from one font, shaped with HarfBuzz, positioned in
+    font units (y up)."""
 
-    def __init__(self, font_file, text):
-        self.font = TTFont(FONTS / font_file)
+    def __init__(self, font_file, text, tracking=0.0):
+        self.font = TTFont(font_file)
         self.glyphs = self.font.getGlyphSet()
-        cmap = self.font.getBestCmap()
-        self.names = [cmap[ord(ch)] for ch in text]
         self.upm = self.font["head"].unitsPerEm
+        order = self.font.getGlyphOrder()
+
+        blob = hb.Blob.from_file_path(str(font_file))
+        hb_font = hb.Font(hb.Face(blob))
+        buf = hb.Buffer()
+        buf.add_str(text)
+        buf.guess_segment_properties()
+        hb.shape(hb_font, buf, {"kern": True, "liga": False})
+
+        self.names = []
+        self.xs = []
+        x = 0
+        for info, pos in zip(buf.glyph_infos, buf.glyph_positions):
+            self.names.append(order[info.codepoint])
+            self.xs.append(x + pos.x_offset)
+            x += pos.x_advance + tracking * self.upm
 
     def draw(self, pen_for, transform):
         """Draws each glyph through pen_for(index) with a final transform."""
-        x = 0
-        hmtx = self.font["hmtx"]
+        a, b, c, d, e, f = transform
         for i, name in enumerate(self.names):
-            a, b, c, d, e, f = transform
-            self.glyphs[name].draw(TransformPen(pen_for(i), (a, b, c, d, e + a * x, f + d * 0)))
-            x += hmtx[name][0]
+            self.glyphs[name].draw(TransformPen(pen_for(i), (a, b, c, d, e + a * self.xs[i], f)))
 
     def bounds(self):
         pen = BoundsPen(self.glyphs)
@@ -88,51 +105,44 @@ class DartPen(BasePen):
 
 
 def dart_logo():
-    """Writes the lockup as Dart code so the app can draw it without image
-    files. Coordinates are scaled so the lockup starts at 0,0."""
-    _, (x0, y0, x1, y1) = lockup(LIGHT)
+    """Writes the wordmark and "fa" as Dart code, each starting at 0,0, so the
+    app can draw its own logo layout without image files."""
     k = 100
-    groups = {"orange": [], "green": [], "fa": []}
-    word = Text("Roboto-Bold.ttf", "davaindia")
-    fa = Text("Roboto-BlackItalic.ttf", "fa")
-    s1, s2 = 1 / word.upm, FA_SCALE / fa.upm
-    wx0, wy0, wx1, wy1 = word.bounds()
-    fx0, fy0, fx1, fy1 = fa.bounds()
-    fa_dx = wx1 * s1 - fx1 * s2
-    fa_dy = -wy0 * s1 + GAP + fy1 * s2
 
-    def emit(text, t, group_for):
-        x = 0
-        hmtx = text.font["hmtx"]
-        for i, name in enumerate(text.names):
-            a, b, c, d, e, f = t
-            final = (a * k, b * k, c * k, d * k, (e + a * x - x0) * k, (f - y0) * k)
-            pen = DartPen(text.glyphs, final)
-            text.glyphs[name].draw(pen)
-            groups[group_for(i)].extend(pen.calls)
-            x += hmtx[name][0]
+    def piece(text, size, group_for):
+        t = Text(*text)
+        x0, y0, x1, y1 = t.bounds()
+        s = size / t.upm
+        groups = {}
+        for i, name in enumerate(t.names):
+            # Font units are y-up; flip and move the top-left corner to 0,0.
+            final = (s * k, 0, 0, -s * k, (s * (t.xs[i] - x0)) * k, (s * y1) * k)
+            pen = DartPen(t.glyphs, final)
+            t.glyphs[name].draw(pen)
+            groups.setdefault(group_for(i), []).extend(pen.calls)
+        return groups, ((x1 - x0) * s * k, (y1 - y0) * s * k)
 
-    emit(word, (s1, 0, 0, -s1, 0, 0), lambda i: "orange" if i < 4 else "green")
-    emit(fa, (s2, 0, 0, -s2, fa_dx, fa_dy), lambda _: "fa")
+    word, word_size = piece((WORDMARK_FONT, "davaindia", WORDMARK_TRACKING), 1, lambda i: "dava" if i < 4 else "india")
+    fa, fa_size = piece((FA_FONT, "fa"), 1, lambda _: "fa")
 
-    w, h = (x1 - x0) * k, (y1 - y0) * k
     out = [
         "// Generated by scripts/app_icon/generate.py. Do not edit by hand.",
         "",
         "import 'dart:ui';",
         "",
-        f"const logoSize = Size({w:.2f}, {h:.2f});",
+        f"const wordmarkSize = Size({word_size[0]:.2f}, {word_size[1]:.2f});",
+        f"const faSize = Size({fa_size[0]:.2f}, {fa_size[1]:.2f});",
     ]
-    for name, fn in (("orange", "logoDava"), ("green", "logoIndia"), ("fa", "logoFa")):
-        out += ["", f"void {fn}(Path p) {{"] + [f"  {c}" for c in groups[name]] + ["}"]
+    for fn, calls in (("wordmarkDava", word["dava"]), ("wordmarkIndia", word["india"]), ("faMark", fa["fa"])):
+        out += ["", f"void {fn}(Path p) {{"] + [f"  {c}" for c in calls] + ["}"]
     DART_OUT.parent.mkdir(parents=True, exist_ok=True)
     DART_OUT.write_text("\n".join(out) + "\n")
 
 
 def lockup(colors):
     """Returns (paths, bbox) of the lockup in its own units, y down."""
-    word = Text("Roboto-Bold.ttf", "davaindia")
-    fa = Text("Roboto-BlackItalic.ttf", "fa")
+    word = Text(WORDMARK_FONT, "davaindia", WORDMARK_TRACKING)
+    fa = Text(FA_FONT, "fa")
 
     s1 = 1 / word.upm  # wordmark at size 1
     s2 = FA_SCALE / fa.upm
