@@ -16,7 +16,9 @@ class AppLogo extends StatelessWidget {
     final c = context.colors;
     final dark = Theme.of(context).brightness == Brightness.dark;
     final h = height;
-    final faHeight = h * 0.36;
+    // The tag is as tall as the logo image; "fa" fills it with even padding.
+    final pad = h * 0.16;
+    final faHeight = h - pad * 2;
     return Semantics(
       label: 'Dava India field app',
       image: true,
@@ -31,8 +33,9 @@ class AppLogo extends StatelessWidget {
           ),
           SizedBox(width: h * 0.22),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: h * 0.2, vertical: h * 0.12),
-            decoration: BoxDecoration(color: c.accentTint, borderRadius: BorderRadius.circular(h * 0.17)),
+            height: h,
+            padding: EdgeInsets.symmetric(horizontal: pad * 1.15, vertical: pad),
+            decoration: BoxDecoration(color: c.accentTint, borderRadius: BorderRadius.circular(h * 0.24)),
             child: CustomPaint(
               size: Size(faHeight * faSize.width / faSize.height, faHeight),
               painter: _FaPainter(c.accent),
