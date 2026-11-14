@@ -20,6 +20,7 @@ abstract final class AppIcons {
   static const download = AppIconData(_download);
   static const eye = AppIconData(_eye);
   static const filter = AppIconData(_filter);
+  static const followUp = AppIconData(_followUp);
   static const home = AppIconData(_home);
   static const id = AppIconData(_id);
   static const leads = AppIconData(_leads);
@@ -57,6 +58,7 @@ abstract final class AppIcons {
     'download': download,
     'eye': eye,
     'filter': filter,
+    'followUp': followUp,
     'home': home,
     'id': id,
     'leads': leads,
@@ -221,6 +223,17 @@ void _filter(Path p) {
   p.lineTo(17, 12);
   p.moveTo(10, 18);
   p.lineTo(14, 18);
+}
+
+void _followUp(Path p) {
+  p.addOval(Rect.fromCircle(center: Offset(9, 8), radius: 3.2));
+  p.moveTo(3.5, 19);
+  p.cubicTo(4.1, 16, 6.3, 14.2, 9, 14.2);
+  p.cubicTo(10, 14.2, 10.9, 14.4, 11.7, 14.8);
+  p.addOval(Rect.fromCircle(center: Offset(17, 16.5), radius: 4));
+  p.moveTo(17, 14.7);
+  p.lineTo(17, 16.5);
+  p.lineTo(18.2, 17.4);
 }
 
 void _home(Path p) {

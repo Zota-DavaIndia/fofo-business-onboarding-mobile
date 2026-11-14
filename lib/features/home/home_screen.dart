@@ -79,7 +79,7 @@ class _Counters extends StatelessWidget {
     final items = [
       ('New assignments', n('ASSIGNED'), AppIcons.leads, StatTone.clay),
       ('Visits scheduled', n('VISIT_SCHEDULED'), AppIcons.visit, StatTone.olive),
-      ('Follow-ups', n('FOLLOW_UP'), AppIcons.sync, StatTone.mustard),
+      ('Follow-ups', n('FOLLOW_UP'), AppIcons.followUp, StatTone.mustard),
       ('Qualified', n('QUALIFIED'), AppIcons.check, StatTone.teal),
     ];
     Widget card(int i) => StatCard(label: items[i].$1, value: items[i].$2, icon: items[i].$3, tone: items[i].$4);
