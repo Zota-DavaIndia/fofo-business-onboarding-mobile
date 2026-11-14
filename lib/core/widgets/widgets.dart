@@ -238,6 +238,10 @@ class AppField extends StatelessWidget {
     this.onChanged,
     this.autofillHints,
     this.trailing,
+    this.minLines,
+    this.maxLines = 1,
+    this.textCapitalization = TextCapitalization.none,
+    this.maxLength,
   });
 
   final TextEditingController? controller;
@@ -252,6 +256,10 @@ class AppField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final Iterable<String>? autofillHints;
   final Widget? trailing;
+  final int? minLines;
+  final int? maxLines;
+  final TextCapitalization textCapitalization;
+  final int? maxLength;
 
   @override
   Widget build(BuildContext context) {
@@ -274,9 +282,14 @@ class AppField extends StatelessWidget {
           onSubmitted: onSubmitted,
           onChanged: onChanged,
           autofillHints: autofillHints,
+          minLines: minLines,
+          maxLines: obscure ? 1 : maxLines,
+          maxLength: maxLength,
+          textCapitalization: textCapitalization,
           style: context.text.body,
           decoration: InputDecoration(
             hintText: hint,
+            counterText: '',
             fillColor: context.fieldFill,
             prefixIcon: leadingIcon == null
                 ? null

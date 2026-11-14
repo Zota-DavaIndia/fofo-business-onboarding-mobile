@@ -28,6 +28,19 @@ class Lead {
     this.nextCallAt,
     this.onboarding,
     this.allowedActions = const [],
+    this.state,
+    this.source,
+    this.campaign,
+    this.adSet,
+    this.utmSource,
+    this.utmMedium,
+    this.utmCampaign,
+    this.consent,
+    this.timeline,
+    this.nextStatuses = const [],
+    this.latitude,
+    this.longitude,
+    this.assignedTo,
   });
 
   final int id;
@@ -52,6 +65,23 @@ class Lead {
   final DateTime? nextCallAt;
   final OnboardingSummary? onboarding;
   final List<String> allowedActions;
+  final String? state;
+  final String? source;
+  final String? campaign;
+  final String? adSet;
+  final String? utmSource;
+  final String? utmMedium;
+  final String? utmCampaign;
+  final bool? consent;
+  final String? timeline;
+  final List<String> nextStatuses;
+  final double? latitude;
+  final double? longitude;
+  final String? assignedTo;
+
+  bool allows(String action) => allowedActions.contains(action);
+
+  bool get hasLocation => latitude != null && longitude != null;
 
   /// "LD-000029 · FOFO · 313001"
   String get subtitle => [leadNo, model, pincode].whereType<String>().where((s) => s.isNotEmpty).join(' · ');
@@ -81,7 +111,34 @@ class Lead {
         ? OnboardingSummary.fromJson(j['onboarding'] as Map<String, dynamic>)
         : null,
     allowedActions: [for (final a in (j['allowed_actions'] as List? ?? const [])) '$a'],
+    state: str(j['state']),
+    source: str(j['source']),
+    campaign: str(j['campaign']),
+    adSet: str(j['ad_set']),
+    utmSource: str(_utm(j, 'source')),
+    utmMedium: str(_utm(j, 'medium')),
+    utmCampaign: str(_utm(j, 'campaign')),
+    consent: j['consent'] is bool ? j['consent'] as bool : null,
+    timeline: str(j['timeline']),
+    nextStatuses: [for (final n in (j['next_statuses'] as List? ?? const [])) '$n'],
+    latitude: (j['latitude'] as num?)?.toDouble(),
+    longitude: (j['longitude'] as num?)?.toDouble(),
+    assignedTo: j['rcm'] is Map ? str((j['rcm'] as Map)['name']) : null,
   );
+}
+
+/// UTM values come either nested (`utm.source`) or flat (`utm_source`).
+Object? _utm(Map<String, dynamic> j, String key) => (j['utm'] is Map ? (j['utm'] as Map)[key] : null) ?? j['utm_$key'];
+
+/// Values of `allowed_actions` on a lead.
+abstract final class LeadAction {
+  static const scheduleVisit = 'schedule_visit';
+  static const checkin = 'checkin';
+  static const checkout = 'checkout';
+  static const addNote = 'add_note';
+  static const changeStatus = 'change_status';
+  static const reassign = 'reassign';
+  static const openOnboarding = 'open_onboarding';
 }
 
 class LastCall {
@@ -190,6 +247,10 @@ final leadProvider = FutureProvider.autoDispose.family<Lead, int>((ref, id) asyn
   final res = await ref.watch(apiClientProvider).get<Map<String, dynamic>>('/leads/$id');
   return Lead.fromJson(res.data);
 });
+
+/// After a change to a lead or its visits: reload the lead, its timeline,
+/// visits and every list that shows them.
+void leadChanged(WidgetRef ref) => refreshTopics(ref, const [LiveTopic.leads, LiveTopic.visits, LiveTopic.dashboard]);
 
 final leadActivitiesProvider = FutureProvider.autoDispose.family<List<Activity>, int>((ref, id) async {
   ref.watch(liveSignalProvider(LiveTopic.leads));

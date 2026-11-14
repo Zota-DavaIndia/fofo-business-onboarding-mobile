@@ -4,12 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/auth/permissions.dart';
+import '../../core/auth/session.dart';
 import '../../core/icons/app_icon.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
+import '../../core/widgets/form.dart';
 import '../../core/widgets/page.dart';
 import '../../core/widgets/widgets.dart';
 import 'lead.dart';
+import 'lead_form_screen.dart';
 import 'lead_status.dart';
 
 class LeadsScreen extends ConsumerStatefulWidget {
@@ -39,10 +43,27 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
   Widget build(BuildContext context) {
     final filter = ref.watch(leadFilterProvider);
     final leads = ref.watch(leadsProvider);
+    final canCreate = ref.watch(sessionProvider).value?.can(Perm.leadsCreate) ?? false;
     return PageBody(
       onRefresh: () => ref.refresh(leadsProvider.future),
       children: [
-        Text('Leads', style: context.text.title),
+        Row(
+          children: [
+            Expanded(child: Text('Leads', style: context.text.title)),
+            if (canCreate)
+              IconTile(
+                AppIcons.plus,
+                semanticLabel: 'Add a lead',
+                color: context.colors.accent,
+                background: context.colors.accentTint,
+                alignment: Alignment.centerRight,
+                onTap: () async {
+                  final id = await pushForm<int>(context, const LeadFormScreen());
+                  if (id != null && context.mounted) context.go('/leads/$id');
+                },
+              ),
+          ],
+        ),
         AppField(
           controller: _search,
           hint: 'Name, mobile or lead no.',
@@ -58,7 +79,8 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
             separatorBuilder: (_, _) => const SizedBox(width: Space.xs),
             itemBuilder: (context, i) {
               final f = LeadFilter.values[i];
-              return _Chip(
+              return AppChip(
+                height: 36,
                 label: f.label,
                 selected: f == filter,
                 onTap: () => ref.read(leadFilterProvider.notifier).set(f),
@@ -116,35 +138,6 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                 ],
         ),
       ],
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, required this.selected, required this.onTap});
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Semantics(
-      button: true,
-      selected: selected,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: Space.lg),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: selected ? c.accentTint : context.fieldFill,
-            borderRadius: BorderRadius.circular(Radii.tile),
-          ),
-          child: Text(label, style: context.text.secondary.copyWith(color: selected ? c.accent : c.textSecondary)),
-        ),
-      ),
     );
   }
 }

@@ -6,6 +6,7 @@ abstract final class Perm {
   static const leadsUpdate = 'leads.update';
   static const leadsStatus = 'leads.status';
   static const leadsAssign = 'leads.assign';
+  static const leadsCall = 'leads.call';
   static const visitsManage = 'visits.manage';
   static const onboardingView = 'onboarding.view';
   static const onboardingSubmit = 'onboarding.submit';

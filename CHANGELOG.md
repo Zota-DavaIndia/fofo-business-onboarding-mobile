@@ -14,6 +14,8 @@ All notable changes to this project are documented here. The format follows [Kee
 - Sign-in with email or mobile; enquirers sign in with their mobile and a code to track their application.
 - Leads tab with search, status filters and a lead detail page with contact, call centre notes, details, onboarding and timeline.
 - Today's visits on Home, and Home counts that open Leads on the matching list.
+- Lead actions: call, log a call, notes, status changes and closing with a reason, editing, reassigning and adding leads.
+- Visits tab with scheduling, rescheduling, cancelling, GPS check-in with photo and site assessment, and check-out.
 
 ### Changed
 

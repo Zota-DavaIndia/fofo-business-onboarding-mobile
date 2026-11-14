@@ -58,4 +58,38 @@ void main() {
     expect(toneForStatus('DROPPED'), Tone.neutral);
     expect(toneForStatus('SOMETHING_NEW'), Tone.neutral);
   });
+
+  test('reads campaign, UTM, next moves and allowed actions', () {
+    final l = Lead.fromJson({
+      'id': 18,
+      'lead_no': 'LD-000018',
+      'name': 'Gaurav Mehta',
+      'status': 'ASSIGNED',
+      'source': 'website',
+      'campaign': 'Google Ads',
+      'utm': {'source': 'google', 'medium': null, 'campaign': 'franchise'},
+      'consent': true,
+      'timeline': 'within 2 months',
+      'next_statuses': ['VISIT_SCHEDULED', 'VISITED', 'DROPPED'],
+      'allowed_actions': ['schedule_visit', 'checkin'],
+      'rcm': {'id': 6, 'name': 'RCM Udaipur'},
+      'latitude': 24.58,
+      'longitude': 73.71,
+    });
+    expect(l.utmSource, 'google');
+    expect(l.utmMedium, isNull);
+    expect(l.utmCampaign, 'franchise');
+    expect(l.consent, isTrue);
+    expect(l.nextStatuses, hasLength(3));
+    expect(l.allows(LeadAction.checkin), isTrue);
+    expect(l.allows(LeadAction.reassign), isFalse);
+    expect(l.assignedTo, 'RCM Udaipur');
+    expect(l.hasLocation, isTrue);
+  });
+
+  test('reads flat UTM keys too', () {
+    final l = Lead.fromJson({'id': 1, 'name': 'A', 'utm_source': 'meta'});
+    expect(l.utmSource, 'meta');
+    expect(l.hasLocation, isFalse);
+  });
 }

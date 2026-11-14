@@ -61,6 +61,12 @@ final tabModules = <AppModule>[
     path: '/visits',
     permission: Perm.visitsManage,
     builder: (_) => const VisitsScreen(),
+    routes: [
+      GoRoute(
+        path: 'lead/:id',
+        builder: (_, state) => LeadDetailScreen(id: int.parse(state.pathParameters['id']!)),
+      ),
+    ],
   ),
   AppModule(id: 'home', label: 'Home', icon: AppIcons.home, path: '/home', builder: (_) => const HomeScreen()),
   AppModule(

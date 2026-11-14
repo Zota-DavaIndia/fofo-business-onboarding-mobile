@@ -28,6 +28,7 @@ abstract final class AppIcons {
   static const locate = AppIconData(_locate);
   static const lock = AppIconData(_lock);
   static const logout = AppIconData(_logout);
+  static const more = AppIconData(_more);
   static const navigate = AppIconData(_navigate);
   static const phone = AppIconData(_phone);
   static const plus = AppIconData(_plus);
@@ -66,6 +67,7 @@ abstract final class AppIcons {
     'locate': locate,
     'lock': lock,
     'logout': logout,
+    'more': more,
     'navigate': navigate,
     'phone': phone,
     'plus': plus,
@@ -308,6 +310,12 @@ void _logout(Path p) {
   p.moveTo(17, 8.5);
   p.lineTo(20.5, 12);
   p.lineTo(17, 15.5);
+}
+
+void _more(Path p) {
+  p.addOval(Rect.fromCircle(center: Offset(5.5, 12), radius: 1.1));
+  p.addOval(Rect.fromCircle(center: Offset(12, 12), radius: 1.1));
+  p.addOval(Rect.fromCircle(center: Offset(18.5, 12), radius: 1.1));
 }
 
 void _navigate(Path p) {
