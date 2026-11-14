@@ -11,15 +11,24 @@ A field user (an RCM today, other designations later) signs in, works the leads 
 
 ## Contents
 
+- [Download](#download)
 - [Screenshots](#screenshots)
 - [Features](#features)
-- [Download](#download)
 - [Getting started](#getting-started)
 - [Releasing](#releasing)
 - [Project structure](#project-structure)
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
+
+## Download
+
+| Platform | Download | Requires |
+|---|---|---|
+| Android | [davaindia-ff-android.apk](https://github.com/Zota-DavaIndia/fofo-business-onboarding-mobile/releases/latest/download/davaindia-ff-android.apk) (latest) · [all releases](https://github.com/Zota-DavaIndia/fofo-business-onboarding-mobile/releases) | Android 7.0 or newer |
+| iOS | Not distributed yet. [Build from source](#getting-started) | |
+
+The APK link always downloads the newest release. Each release includes `SHA256SUMS` for checking the download. When installing the APK, Android asks you to allow installs from your browser or file manager the first time; after that the app finds and installs updates itself.
 
 ## Screenshots
 
@@ -56,15 +65,6 @@ Built so far:
 - Montserrat, bundled with the app.
 
 Planned next: store sales reports once the ERP is connected.
-
-## Download
-
-| Platform | File | Requires |
-|---|---|---|
-| Android | `davaindia-ff-android.apk` from the [latest release](https://github.com/Zota-DavaIndia/fofo-business-onboarding-mobile/releases/latest) | Android 7.0 or newer |
-| iOS | Not distributed yet. [Build from source](#getting-started) | |
-
-The first release will be published once the production CRM address is configured. Each release includes `SHA256SUMS` for checking the download. When installing the APK, Android asks you to allow installs from your browser or file manager the first time.
 
 ## Getting started
 
