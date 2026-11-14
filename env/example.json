@@ -1,0 +1,5 @@
+{
+  "APP_ENV": "local",
+  "API_BASE_URL": "http://10.0.2.2/davaindia-crm/public/api/v1",
+  "RELEASES_URL": "https://github.com/Zota-DavaIndia/fofo-business-onboarding-mobile/releases/latest/download/version.json"
+}

@@ -1,0 +1,66 @@
+# Internal docs (process, backend spec, planning) stay local
+docs/
+
+# Local environment and signing
+env/*.json
+!env/example.json
+!env/demo.json
+android/key.properties
+*.jks
+*.keystore
+
+# AI assistants and agents
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+GEMINI.md
+.gemini/
+.codex/
+.cursor/
+.cursorrules
+.cursorignore
+.windsurf/
+.windsurfrules
+.aider*
+.continue/
+.copilot/
+.github/copilot-instructions.md
+.roo/
+.clinerules
+.kiro/
+.junie/
+.mcp.json
+
+# Flutter and Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+coverage/
+*.iml
+.idea/
+.vscode/
+.DS_Store
+
+# Android
+android/.gradle/
+android/captures/
+android/local.properties
+android/app/debug
+android/app/profile
+android/app/release
+android/.kotlin/
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Flutter/flutter_export_environment.sh
+ios/Runner/GeneratedPluginRegistrant.*
+**/xcuserdata/
