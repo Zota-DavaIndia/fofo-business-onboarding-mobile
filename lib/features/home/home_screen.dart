@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,7 +9,9 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/page.dart';
 import '../../core/widgets/widgets.dart';
+import '../../core/brand/logo.dart';
 import 'dashboard.dart';
+import 'stat_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -35,7 +37,9 @@ class HomeScreen extends ConsumerWidget {
       children: [
         Row(
           children: [
-            const Expanded(child: Wordmark()),
+            const Expanded(
+              child: Align(alignment: Alignment.centerLeft, child: AppLogo(height: 40)),
+            ),
             IconTile(
               AppIcons.bell,
               semanticLabel: 'Alerts',
@@ -73,36 +77,30 @@ class _Counters extends StatelessWidget {
     final d = dashboard.value;
     String n(String status) => d == null ? '–' : '${d.count(status)}';
     final items = [
-      ('New assignments', n('ASSIGNED')),
-      ('Visits scheduled', n('VISIT_SCHEDULED')),
-      ('Follow-ups', n('FOLLOW_UP')),
-      ('Qualified', n('QUALIFIED')),
+      ('New assignments', n('ASSIGNED'), AppIcons.leads, StatTone.clay),
+      ('Visits scheduled', n('VISIT_SCHEDULED'), AppIcons.visit, StatTone.olive),
+      ('Follow-ups', n('FOLLOW_UP'), AppIcons.sync, StatTone.mustard),
+      ('Qualified', n('QUALIFIED'), AppIcons.check, StatTone.teal),
     ];
+    Widget card(int i) => StatCard(label: items[i].$1, value: items[i].$2, icon: items[i].$3, tone: items[i].$4);
+    // Each row takes the height of its tallest card; the cards stretch to
+    // match, and their text stays on the bottom edge.
+    Widget row(int a, int b) => IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: card(a)),
+          const SizedBox(width: Space.sm),
+          Expanded(child: card(b)),
+        ],
+      ),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: Space.sm,
-          crossAxisSpacing: Space.sm,
-          childAspectRatio: 2.2,
-          children: [
-            for (final (label, value) in items)
-              AppCard(
-                padding: const EdgeInsets.symmetric(horizontal: Space.lg, vertical: Space.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(label, style: context.text.label),
-                    Text(value, style: context.text.number),
-                  ],
-                ),
-              ),
-          ],
-        ),
+        row(0, 1),
+        const SizedBox(height: Space.sm),
+        row(2, 3),
         if (dashboard.hasError)
           Padding(
             padding: const EdgeInsets.only(top: Space.sm),

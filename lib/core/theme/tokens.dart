@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Every color the app uses. Screens read these through `context.colors`,
 /// never as literal hex values.
@@ -149,4 +149,37 @@ abstract final class Sizes {
   static const double field = 44;
   static const double tabBar = 72;
   static const double minTouch = 48;
+}
+
+/// Colour families for the Home stat cards. Each is a top-to-bottom
+/// gradient deep enough for white text in both themes.
+enum StatTone { clay, olive, mustard, teal }
+
+@immutable
+class StatColors extends ThemeExtension<StatColors> {
+  const StatColors(this._gradients);
+
+  final Map<StatTone, (Color, Color)> _gradients;
+
+  (Color, Color) of(StatTone tone) => _gradients[tone]!;
+
+  static const light = StatColors({
+    StatTone.clay: (Color(0xFFC9582B), Color(0xFF8E3612)),
+    StatTone.olive: (Color(0xFF6F8E33), Color(0xFF43601B)),
+    StatTone.mustard: (Color(0xFFA9780C), Color(0xFF6E4E00)),
+    StatTone.teal: (Color(0xFF25887C), Color(0xFF0B524B)),
+  });
+
+  static const dark = StatColors({
+    StatTone.clay: (Color(0xFF6E2F14), Color(0xFF3A1A0D)),
+    StatTone.olive: (Color(0xFF3A4D20), Color(0xFF1E2911)),
+    StatTone.mustard: (Color(0xFF5A4812), Color(0xFF2E250A)),
+    StatTone.teal: (Color(0xFF1A4C47), Color(0xFF0D2725)),
+  });
+
+  @override
+  StatColors copyWith() => this;
+
+  @override
+  StatColors lerp(StatColors? other, double t) => other == null || t < 0.5 ? this : other;
 }
