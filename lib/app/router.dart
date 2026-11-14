@@ -6,12 +6,15 @@ import '../core/auth/session.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/splash_screen.dart';
 import '../features/alerts/alerts_screen.dart';
+import '../features/tracking/track_screen.dart';
+import '../features/tracking/track_session.dart';
 import 'modules.dart';
 import 'tab_shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier(0);
   ref.listen(sessionProvider, (_, _) => refresh.value++);
+  ref.listen(trackSessionProvider, (_, _) => refresh.value++);
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
@@ -19,13 +22,19 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
+      final track = ref.read(trackSessionProvider);
       final loc = state.matchedLocation;
 
-      if (session.isLoading && !session.hasValue) return loc == '/splash' ? null : '/splash';
+      final loading = (session.isLoading && !session.hasValue) || (track.isLoading && !track.hasValue);
+      if (loading) return loc == '/splash' ? null : '/splash';
 
       final user = session.value;
-      if (user == null) return loc == '/login' ? null : '/login';
-      if (loc == '/login' || loc == '/splash') return '/home';
+      if (user == null) {
+        // Someone who made an enquiry, signed in with a one-time code.
+        if (track.value != null) return loc == '/track' ? null : '/track';
+        return loc == '/login' ? null : '/login';
+      }
+      if (loc == '/login' || loc == '/splash' || loc == '/track') return '/home';
 
       for (final m in tabModules) {
         if (loc.startsWith(m.path) && !m.allows(user)) return '/home';
@@ -35,6 +44,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/splash', builder: (_, _) => const SplashScreen()),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(path: '/track', builder: (_, _) => const TrackScreen()),
       GoRoute(path: '/alerts', builder: (_, _) => const AlertsScreen()),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => TabShell(shell: shell),

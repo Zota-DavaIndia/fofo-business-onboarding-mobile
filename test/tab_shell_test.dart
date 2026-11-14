@@ -5,6 +5,8 @@ import 'package:fofo_onboarding/app/app.dart';
 import 'package:fofo_onboarding/core/auth/session.dart';
 import 'package:fofo_onboarding/core/auth/user.dart';
 import 'package:fofo_onboarding/features/home/dashboard.dart';
+import 'package:fofo_onboarding/features/tracking/track.dart';
+import 'package:fofo_onboarding/features/tracking/track_session.dart';
 
 class _FakeSession extends SessionController {
   _FakeSession(this.user);
@@ -13,6 +15,11 @@ class _FakeSession extends SessionController {
 
   @override
   Future<AppUser?> build() async => user;
+}
+
+class _NoTrack extends TrackSession {
+  @override
+  Future<Track?> build() async => null;
 }
 
 AppUser _user(List<String> permissions) => AppUser.fromJson({
@@ -29,6 +36,7 @@ Future<void> _pump(WidgetTester tester, AppUser? user) async {
     ProviderScope(
       overrides: [
         sessionProvider.overrideWith(() => _FakeSession(user)),
+        trackSessionProvider.overrideWith(_NoTrack.new),
         dashboardProvider.overrideWith(
           (ref) async => Dashboard.fromJson({
             'by_status': {'ASSIGNED': 4},

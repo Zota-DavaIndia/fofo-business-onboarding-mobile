@@ -259,7 +259,13 @@ class AppField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (label != null) ...[Text(label!, style: context.text.label), const SizedBox(height: Space.xs)],
+        if (label != null) ...[
+          Text(
+            label!,
+            style: context.text.secondary.copyWith(fontWeight: FontWeight.w500, color: c.textSecondary),
+          ),
+          const SizedBox(height: Space.xs),
+        ],
         TextField(
           controller: controller,
           obscureText: obscure,
@@ -272,7 +278,6 @@ class AppField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hint,
             fillColor: context.fieldFill,
-            errorText: errorText,
             prefixIcon: leadingIcon == null
                 ? null
                 : Padding(
@@ -283,12 +288,18 @@ class AppField extends StatelessWidget {
             suffixIcon: trailing,
           ),
         ),
+        // Drawn here rather than through the decoration, which would indent
+        // it to the text inside the box; this keeps it on the left edge.
+        if (errorText case final error?) ...[
+          const SizedBox(height: Space.xs),
+          Text(error, style: context.text.label.copyWith(color: c.danger)),
+        ],
       ],
     );
   }
 }
 
-enum Tone { accent, success, warning, danger, neutral }
+enum Tone { accent, success, warning, danger, info, neutral }
 
 /// Small status label: tone color on the same color at 14%.
 class StatusBadge extends StatelessWidget {
@@ -305,6 +316,7 @@ class StatusBadge extends StatelessWidget {
       Tone.success => c.success,
       Tone.warning => c.warning,
       Tone.danger => c.danger,
+      Tone.info => c.info,
       Tone.neutral => c.textSecondary,
     };
     return Container(

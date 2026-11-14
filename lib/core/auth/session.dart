@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/env.dart';
 import '../network/api_client.dart';
+import 'login_id.dart';
 import 'secure_store.dart';
 import 'user.dart';
 
@@ -42,11 +43,11 @@ class SessionController extends AsyncNotifier<AppUser?> {
   }
 
   /// Throws [ApiException] on failure so the login form can show it.
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login({required LoginId id, required String password}) async {
     final res = await _api.post<Map<String, dynamic>>(
       '/auth/login',
       body: {
-        'email': email.trim(),
+        id.field: id.value,
         'password': password,
         'device_id': await _store.deviceId(),
         'device_name': '${Platform.operatingSystem} ${Platform.operatingSystemVersion}'.trim(),

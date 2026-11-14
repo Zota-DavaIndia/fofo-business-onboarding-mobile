@@ -20,6 +20,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.success,
     required this.warning,
     required this.danger,
+    required this.info,
     required this.brandOrange,
     required this.brandGreen,
     required this.scrim,
@@ -40,6 +41,7 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color success;
   final Color warning;
   final Color danger;
+  final Color info;
   final Color brandOrange;
   final Color brandGreen;
   final Color scrim;
@@ -60,6 +62,7 @@ class AppColors extends ThemeExtension<AppColors> {
     success: Color(0xFF2E7A45),
     warning: Color(0xFF8A6A00),
     danger: Color(0xFFB3261E),
+    info: Color(0xFF1F5FAE),
     brandOrange: Color(0xFFFC8448),
     brandGreen: Color(0xFF5A782A),
     scrim: Color(0x61000000),
@@ -81,6 +84,7 @@ class AppColors extends ThemeExtension<AppColors> {
     success: Color(0xFF6CCB8A),
     warning: Color(0xFFE2C044),
     danger: Color(0xFFF07B70),
+    info: Color(0xFF7FB0F0),
     brandOrange: Color(0xFFFC8448),
     brandGreen: Color(0xFF9BBE5C),
     scrim: Color(0x8A000000),
@@ -112,6 +116,7 @@ class AppColors extends ThemeExtension<AppColors> {
       success: l(success, other.success),
       warning: l(warning, other.warning),
       danger: l(danger, other.danger),
+      info: l(info, other.info),
       brandOrange: l(brandOrange, other.brandOrange),
       brandGreen: l(brandGreen, other.brandGreen),
       scrim: l(scrim, other.scrim),
@@ -146,7 +151,7 @@ abstract final class Sizes {
   static const double icon = 22;
   static const double iconSmall = 18;
   static const double button = 46;
-  static const double field = 44;
+  static const double field = 48;
   static const double tabBar = 72;
   static const double minTouch = 48;
 }
