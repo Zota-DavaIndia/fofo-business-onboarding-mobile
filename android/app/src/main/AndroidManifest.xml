@@ -1,5 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- GPS check-in at the lead's site and the store location pin. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Site, partner and document photos taken in the app. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- Push messages on Android 13 and newer. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Installing updates downloaded from GitHub Releases. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
 
     <application
         android:label="Davaindia Field"
