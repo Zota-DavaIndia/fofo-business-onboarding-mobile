@@ -18,6 +18,10 @@ subprojects {
 subprojects {
     project.evaluationDependsOn(":app")
 }
+subprojects {
+    // Plugins' own release lint passes hit the same lint crash; see app/build.gradle.kts.
+    tasks.matching { it.name.startsWith("lintVital") }.configureEach { enabled = false }
+}
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)

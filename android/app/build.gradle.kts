@@ -47,6 +47,12 @@ android {
         }
     }
 
+    // Release lint crashes inside lint itself on image_picker_android's Java sources
+    // (NoSuchMethodError in JavaDocParser). `./gradlew lint` still works.
+    lint {
+        checkReleaseBuilds = false
+    }
+
     buildTypes {
         release {
             signingConfig = if (storePath != null) {
