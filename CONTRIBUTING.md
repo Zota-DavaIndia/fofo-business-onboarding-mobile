@@ -11,10 +11,10 @@ This is the field onboarding app for Dava India. Work happens in branches and la
 ## Run
 
 ```bash
-flutter run --dart-define-from-file=env/demo.json
+flutter run --dart-define-from-file=env/staging.json
 ```
 
-`env/demo.json` answers the API with sample data, so you can try the app in a simulator without a backend. `env/staging.json` points at the staging CRM; `env/local.json` at your own.
+`env/staging.json` points at the staging CRM. Ask the backend team for a staging test account. Use `env/local.json` to point at your own backend.
 
 Android builds are made only by the release workflow on GitHub. Check changes locally in the iOS simulator and with the tests.
 

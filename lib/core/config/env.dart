@@ -18,7 +18,4 @@ abstract final class Env {
   static const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '0.1.0');
 
   static const isProduction = appEnv == 'production';
-
-  /// Sample data instead of the CRM, for trying the app in a simulator.
-  static const isDemo = appEnv == 'demo';
 }

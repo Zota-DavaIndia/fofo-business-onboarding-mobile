@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 
 import '../config/env.dart';
-import 'demo_backend.dart';
 
 /// Error from the CRM API, or from the network before it got there.
 class ApiException implements Exception {
@@ -63,7 +62,6 @@ class ApiClient {
         },
       ),
     );
-    if (Env.isDemo) _dio.interceptors.add(DemoBackend());
   }
 
   final Dio _dio;

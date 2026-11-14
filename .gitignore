@@ -4,7 +4,6 @@ docs/
 # Local environment and signing
 env/*.json
 !env/example.json
-!env/demo.json
 !env/staging.json
 android/key.properties
 *.jks
