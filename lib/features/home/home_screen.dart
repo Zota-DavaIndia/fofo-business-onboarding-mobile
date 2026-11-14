@@ -140,19 +140,24 @@ class _Bell extends StatelessWidget {
             right: -4,
             top: 2,
             child: IgnorePointer(
+              // A fixed circle; past 9 it reads "9+" so the badge never stretches into a pill.
               child: Container(
-                constraints: const BoxConstraints(minWidth: 18),
-                height: 18,
-                padding: const EdgeInsets.symmetric(horizontal: 5),
+                width: 24,
+                height: 24,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: c.primary,
-                  borderRadius: BorderRadius.circular(9),
+                  shape: BoxShape.circle,
                   border: Border.all(color: c.page, width: 2),
                 ),
                 child: Text(
-                  unread > 99 ? '99+' : '$unread',
-                  style: context.text.caption.copyWith(color: c.onPrimary, fontWeight: FontWeight.w600, height: 1),
+                  unread > 9 ? '9+' : '$unread',
+                  style: context.text.caption.copyWith(
+                    color: c.onPrimary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    height: 1,
+                  ),
                 ),
               ),
             ),
