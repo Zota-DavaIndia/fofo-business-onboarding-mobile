@@ -1,22 +1,22 @@
-import 'package:flutter/foundation.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../theme/app_theme.dart';
 import 'logo_paths.g.dart';
 
-/// The davaindia wordmark with a small "fa" tag beside it. [height] is the
-/// height of the wordmark letters; the tag is sized from it. Both are drawn
-/// from the same vector outlines as the app icon.
+/// The official Dava India logo with a small "fa" tag beside it. [height] is
+/// the height of the logo image; the tag is sized from it. Dark mode uses a
+/// copy with a lighter green so "india" stays readable.
 class AppLogo extends StatelessWidget {
-  const AppLogo({super.key, this.height = 20});
+  const AppLogo({super.key, this.height = 30});
 
   final double height;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final h = height;
-    final faHeight = h * 0.62;
+    final faHeight = h * 0.36;
     return Semantics(
       label: 'Dava India field app',
       image: true,
@@ -24,17 +24,18 @@ class AppLogo extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CustomPaint(
-            size: Size(h * wordmarkSize.width / wordmarkSize.height, h),
-            painter: _PathsPainter(wordmarkSize, [(wordmarkDava, c.brandOrange), (wordmarkIndia, c.brandGreen)]),
+          Image.asset(
+            dark ? 'assets/brand/logo-dark.png' : 'assets/brand/logo.png',
+            height: h,
+            filterQuality: FilterQuality.medium,
           ),
-          SizedBox(width: h * 0.32),
+          SizedBox(width: h * 0.22),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: h * 0.36, vertical: h * 0.22),
-            decoration: BoxDecoration(color: c.accentTint, borderRadius: BorderRadius.circular(h * 0.3)),
+            padding: EdgeInsets.symmetric(horizontal: h * 0.2, vertical: h * 0.12),
+            decoration: BoxDecoration(color: c.accentTint, borderRadius: BorderRadius.circular(h * 0.17)),
             child: CustomPaint(
               size: Size(faHeight * faSize.width / faSize.height, faHeight),
-              painter: _PathsPainter(faSize, [(faMark, c.accent)]),
+              painter: _FaPainter(c.accent),
             ),
           ),
         ],
@@ -43,33 +44,25 @@ class AppLogo extends StatelessWidget {
   }
 }
 
-typedef _PathBuilder = void Function(Path);
+class _FaPainter extends CustomPainter {
+  _FaPainter(this.color);
 
-class _PathsPainter extends CustomPainter {
-  _PathsPainter(this.box, this.parts);
+  final Color color;
 
-  final Size box;
-  final List<(_PathBuilder, Color)> parts;
-
-  static final _cache = <_PathBuilder, Path>{};
+  static final _path = () {
+    final p = Path();
+    faMark(p);
+    return p;
+  }();
 
   @override
   void paint(Canvas canvas, Size size) {
     canvas.save();
-    canvas.scale(size.height / box.height);
-    final paint = Paint()..isAntiAlias = true;
-    for (final (build, color) in parts) {
-      final path = _cache.putIfAbsent(build, () {
-        final p = Path();
-        build(p);
-        return p;
-      });
-      canvas.drawPath(path, paint..color = color);
-    }
+    canvas.scale(size.height / faSize.height);
+    canvas.drawPath(_path, Paint()..color = color);
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(_PathsPainter old) =>
-      old.box != box || !listEquals([for (final p in old.parts) p.$2], [for (final p in parts) p.$2]);
+  bool shouldRepaint(_FaPainter old) => old.color != color;
 }

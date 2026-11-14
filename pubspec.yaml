@@ -24,6 +24,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: false
+  assets:
+    - assets/brand/
   fonts:
     - family: Montserrat
       fonts:

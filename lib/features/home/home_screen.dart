@@ -38,7 +38,7 @@ class HomeScreen extends ConsumerWidget {
         Row(
           children: [
             const Expanded(
-              child: Align(alignment: Alignment.centerLeft, child: AppLogo(height: 18)),
+              child: Align(alignment: Alignment.centerLeft, child: AppLogo(height: 30)),
             ),
             IconTile(
               AppIcons.bell,

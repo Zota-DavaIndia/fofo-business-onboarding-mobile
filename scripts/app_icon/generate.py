@@ -1,4 +1,5 @@
-"""Builds the launcher icon and the in-app logo from glyph outlines.
+"""Builds the launcher icon and the "fa" tag of the in-app logo from glyph
+outlines.
 
 The logo is the davaindia wordmark (Montserrat Bold) with "fa" (Montserrat
 ExtraBold Italic). Text is shaped with HarfBuzz so kerning matches what the
@@ -105,8 +106,8 @@ class DartPen(BasePen):
 
 
 def dart_logo():
-    """Writes the wordmark and "fa" as Dart code, each starting at 0,0, so the
-    app can draw its own logo layout without image files."""
+    """Writes "fa" as Dart code starting at 0,0 for the tag beside the
+    in-app logo."""
     k = 100
 
     def piece(text, size, group_for):
@@ -122,7 +123,6 @@ def dart_logo():
             groups.setdefault(group_for(i), []).extend(pen.calls)
         return groups, ((x1 - x0) * s * k, (y1 - y0) * s * k)
 
-    word, word_size = piece((WORDMARK_FONT, "davaindia", WORDMARK_TRACKING), 1, lambda i: "dava" if i < 4 else "india")
     fa, fa_size = piece((FA_FONT, "fa"), 1, lambda _: "fa")
 
     out = [
@@ -130,10 +130,9 @@ def dart_logo():
         "",
         "import 'dart:ui';",
         "",
-        f"const wordmarkSize = Size({word_size[0]:.2f}, {word_size[1]:.2f});",
         f"const faSize = Size({fa_size[0]:.2f}, {fa_size[1]:.2f});",
     ]
-    for fn, calls in (("wordmarkDava", word["dava"]), ("wordmarkIndia", word["india"]), ("faMark", fa["fa"])):
+    for fn, calls in (("faMark", fa["fa"]),):
         out += ["", f"void {fn}(Path p) {{"] + [f"  {c}" for c in calls] + ["}"]
     DART_OUT.parent.mkdir(parents=True, exist_ok=True)
     DART_OUT.write_text("\n".join(out) + "\n")

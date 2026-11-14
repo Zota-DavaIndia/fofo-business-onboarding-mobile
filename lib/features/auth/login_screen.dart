@@ -76,7 +76,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
       children: [
         const SizedBox(height: Space.xxl),
-        const AppLogo(height: 24),
+        const AppLogo(height: 40),
         const SizedBox(height: Space.xxl),
         Text('Sign in', style: context.text.title),
         Text('Use the account your admin set up for you.', style: context.text.secondary),
