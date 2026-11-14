@@ -80,7 +80,14 @@ class HomeScreen extends ConsumerWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Hi ${user.firstName}', style: context.text.title),
+            Row(
+              children: [
+                Text('Hi ${user.firstName}', style: context.text.title),
+                const SizedBox(width: Space.sm),
+                // Noto Emoji waving hand (Apache 2.0), bundled so it looks the same on every phone.
+                const ExcludeSemantics(child: Image(image: AssetImage('assets/emoji/wave.png'), width: 24, height: 24)),
+              ],
+            ),
             Text(
               territories.isEmpty ? user.designation : '${user.designation} · $territories',
               style: context.text.secondary,
@@ -259,7 +266,7 @@ class _Headline extends ConsumerWidget {
         label: 'Total leads',
         value: '${d.total}',
         icon: AppIcons.leads,
-        tone: StatTone.clay,
+        tone: StatTone.lavender,
         onTap: () => leads(LeadFilter.all),
       ),
       StatCard(

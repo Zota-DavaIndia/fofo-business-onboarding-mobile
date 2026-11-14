@@ -162,9 +162,10 @@ class _MyDayCardState extends ConsumerState<MyDayCard> {
           ],
           if (state != DayState.ended) ...[
             const SizedBox(height: Space.md),
+            // Start day is the morning's main action; End day stays quiet so it isn't tapped by mistake mid-shift.
             AppButton(
               label: state == DayState.started ? 'End day' : 'Start day',
-              icon: state == DayState.started ? AppIcons.check : AppIcons.route,
+              icon: state == DayState.started ? AppIcons.check : AppIcons.start,
               kind: state == DayState.started ? ButtonKind.secondary : ButtonKind.primary,
               loading: _busy,
               onPressed: t == null || _busy ? null : () => _act(state != DayState.started),
@@ -219,6 +220,7 @@ class WorkTiles extends ConsumerWidget {
         _Tile(
           icon: AppIcons.route,
           title: 'Day plan',
+          tone: StatTone.teal,
           caption: stops == null || stops.isEmpty
               ? 'Plan stores and leads'
               : '${stops.where((s) => s.status == StopStatus.done).length} of ${stops.length} visited',
@@ -228,6 +230,7 @@ class WorkTiles extends ConsumerWidget {
         _Tile(
           icon: AppIcons.calendar,
           title: 'Calendar',
+          tone: StatTone.olive,
           caption: 'Visits, calls, activities',
           onTap: () => pushForm<void>(context, const CalendarScreen()),
         ),
@@ -235,6 +238,7 @@ class WorkTiles extends ConsumerWidget {
         _Tile(
           icon: AppIcons.alert,
           title: 'Tickets',
+          tone: StatTone.periwinkle,
           caption: openTickets == null
               ? 'Store issues'
               : (openTickets.isEmpty ? 'None open' : '${openTickets.length} open'),
@@ -244,6 +248,7 @@ class WorkTiles extends ConsumerWidget {
         _Tile(
           icon: AppIcons.receipt,
           title: 'Expenses',
+          tone: StatTone.mustard,
           caption: draft == null
               ? 'Claim travel and costs'
               : (draft > 0 ? '${formatRupees(draft)} to submit' : 'All submitted'),
@@ -253,6 +258,7 @@ class WorkTiles extends ConsumerWidget {
         _Tile(
           icon: AppIcons.leave,
           title: 'Leave',
+          tone: StatTone.espresso,
           caption: pending == null ? 'Apply and track' : (pending > 0 ? '$pending pending' : 'Apply and track'),
           onTap: () => pushForm<void>(context, const LeaveScreen()),
         ),
@@ -263,28 +269,41 @@ class WorkTiles extends ConsumerWidget {
 }
 
 class _Tile extends StatelessWidget {
-  const _Tile({required this.icon, required this.title, required this.caption, required this.onTap});
+  const _Tile({
+    required this.icon,
+    required this.title,
+    required this.tone,
+    required this.caption,
+    required this.onTap,
+  });
 
   final AppIconData icon;
   final String title;
+  final StatTone tone;
   final String caption;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final t = context.stats.tint(tone);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: ConstrainedBox(
         constraints: const BoxConstraints(minWidth: 132),
-        child: AppCard(
+        child: Container(
+          padding: const EdgeInsets.all(Space.lg),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(Radii.card),
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [t.top, t.bottom]),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AppIcon(icon, size: Sizes.icon, color: context.colors.accent),
+              AppIcon(icon, size: Sizes.icon, color: t.ink),
               const SizedBox(height: Space.sm),
-              Text(title, style: context.text.bodyStrong, maxLines: 1, softWrap: false),
-              Text(caption, style: context.text.label, maxLines: 1, softWrap: false),
+              Text(title, style: context.text.bodyStrong.copyWith(color: t.ink), maxLines: 1, softWrap: false),
+              Text(caption, style: context.text.label.copyWith(color: t.sub), maxLines: 1, softWrap: false),
             ],
           ),
         ),

@@ -42,6 +42,7 @@ abstract final class AppIcons {
   static const share = AppIconData(_share);
   static const shield = AppIconData(_shield);
   static const sign = AppIconData(_sign);
+  static const start = AppIconData(_start);
   static const store = AppIconData(_store);
   static const sync = AppIconData(_sync);
   static const upload = AppIconData(_upload);
@@ -85,6 +86,7 @@ abstract final class AppIcons {
     'share': share,
     'shield': shield,
     'sign': sign,
+    'start': start,
     'store': store,
     'sync': sync,
     'upload': upload,
@@ -460,6 +462,14 @@ void _sign(Path p) {
   p.cubicTo(17.3, 14.5, 18.1, 13.9, 19, 13);
   p.moveTo(3.5, 20.5);
   p.lineTo(20.5, 20.5);
+}
+
+void _start(Path p) {
+  p.addOval(Rect.fromCircle(center: Offset(12, 12), radius: 8.5));
+  p.moveTo(10.2, 8.9);
+  p.lineTo(10.2, 15.1);
+  p.lineTo(15.2, 12);
+  p.close();
 }
 
 void _store(Path p) {

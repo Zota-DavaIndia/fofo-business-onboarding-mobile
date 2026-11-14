@@ -60,24 +60,17 @@ class LeaveScreen extends ConsumerWidget {
     final data = ref.watch(leavesProvider);
     return PageBody(
       onRefresh: () => ref.refresh(leavesProvider.future),
-      header: Row(
-        children: [
-          IconTile(
-            AppIcons.left,
-            semanticLabel: 'Back',
-            alignment: Alignment.centerLeft,
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
-          Expanded(child: Text('Leave', style: context.text.title)),
-          IconTile(
-            AppIcons.plus,
-            semanticLabel: 'Apply for leave',
-            color: context.colors.accent,
-            background: context.colors.accentTint,
-            alignment: Alignment.centerRight,
-            onTap: () => _apply(context, ref),
-          ),
-        ],
+      header: PageHeader(
+        'Leave',
+        onBack: () => Navigator.of(context).maybePop(),
+        trailing: IconTile(
+          AppIcons.plus,
+          semanticLabel: 'Apply for leave',
+          color: context.colors.accent,
+          background: context.colors.accentTint,
+          alignment: Alignment.centerRight,
+          onTap: () => _apply(context, ref),
+        ),
       ),
       children: data.when(
         loading: () => [

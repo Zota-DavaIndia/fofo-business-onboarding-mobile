@@ -158,29 +158,134 @@ abstract final class Sizes {
 
 /// Colour families for the Home stat cards. Each is a top-to-bottom
 /// gradient deep enough for white text in both themes.
-enum StatTone { clay, olive, mustard, teal }
+enum StatTone { clay, olive, mustard, teal, espresso, lavender, periwinkle }
+
+typedef TintColors = ({Color top, Color bottom, Color ink, Color sub});
 
 @immutable
 class StatColors extends ThemeExtension<StatColors> {
-  const StatColors(this._gradients);
+  const StatColors(this._gradients, this._tints);
 
   final Map<StatTone, (Color, Color)> _gradients;
+  final Map<StatTone, TintColors> _tints;
 
   (Color, Color) of(StatTone tone) => _gradients[tone]!;
 
-  static const light = StatColors({
-    StatTone.clay: (Color(0xFFC9582B), Color(0xFF8E3612)),
-    StatTone.olive: (Color(0xFF6F8E33), Color(0xFF43601B)),
-    StatTone.mustard: (Color(0xFFA9780C), Color(0xFF6E4E00)),
-    StatTone.teal: (Color(0xFF25887C), Color(0xFF0B524B)),
-  });
+  /// The same tones, light, for smaller tiles: a pale gradient with deep text in light mode,
+  /// a dim one with soft text in dark mode.
+  TintColors tint(StatTone tone) => _tints[tone]!;
 
-  static const dark = StatColors({
-    StatTone.clay: (Color(0xFF6E2F14), Color(0xFF3A1A0D)),
-    StatTone.olive: (Color(0xFF3A4D20), Color(0xFF1E2911)),
-    StatTone.mustard: (Color(0xFF5A4812), Color(0xFF2E250A)),
-    StatTone.teal: (Color(0xFF1A4C47), Color(0xFF0D2725)),
-  });
+  static const light = StatColors(
+    {
+      StatTone.clay: (Color(0xFFC9582B), Color(0xFF8E3612)),
+      StatTone.olive: (Color(0xFF6F8E33), Color(0xFF43601B)),
+      StatTone.mustard: (Color(0xFFA9780C), Color(0xFF6E4E00)),
+      StatTone.teal: (Color(0xFF25887C), Color(0xFF0B524B)),
+      StatTone.espresso: (Color(0xFF6A4A3A), Color(0xFF33221A)),
+      StatTone.lavender: (Color(0xFF8A4677), Color(0xFF4F2145)),
+      StatTone.periwinkle: (Color(0xFF4A62A8), Color(0xFF24356E)),
+    },
+    {
+      StatTone.teal: (
+        top: Color(0xFFE3F1EE),
+        bottom: Color(0xFFC9E4DE),
+        ink: Color(0xFF0B524B),
+        sub: Color(0xFF25706A),
+      ),
+      StatTone.olive: (
+        top: Color(0xFFEEF2E2),
+        bottom: Color(0xFFDCE5C6),
+        ink: Color(0xFF43601B),
+        sub: Color(0xFF5E7A32),
+      ),
+      StatTone.clay: (
+        top: Color(0xFFF8E6DC),
+        bottom: Color(0xFFF0CDBB),
+        ink: Color(0xFF8E3612),
+        sub: Color(0xFFA9502A),
+      ),
+      StatTone.mustard: (
+        top: Color(0xFFF6EDD6),
+        bottom: Color(0xFFECDDB1),
+        ink: Color(0xFF6E4E00),
+        sub: Color(0xFF8A6A10),
+      ),
+      StatTone.espresso: (
+        top: Color(0xFFF4EBE4),
+        bottom: Color(0xFFE8D9CD),
+        ink: Color(0xFF33221A),
+        sub: Color(0xFF6A4A3A),
+      ),
+      StatTone.lavender: (
+        top: Color(0xFFF3E9F1),
+        bottom: Color(0xFFE5D0E0),
+        ink: Color(0xFF4F2145),
+        sub: Color(0xFF7A4A6E),
+      ),
+      StatTone.periwinkle: (
+        top: Color(0xFFE8ECF8),
+        bottom: Color(0xFFD2DAF1),
+        ink: Color(0xFF24356E),
+        sub: Color(0xFF4A5C94),
+      ),
+    },
+  );
+
+  static const dark = StatColors(
+    {
+      StatTone.clay: (Color(0xFF6E2F14), Color(0xFF3A1A0D)),
+      StatTone.olive: (Color(0xFF3A4D20), Color(0xFF1E2911)),
+      StatTone.mustard: (Color(0xFF5A4812), Color(0xFF2E250A)),
+      StatTone.teal: (Color(0xFF1A4C47), Color(0xFF0D2725)),
+      StatTone.espresso: (Color(0xFF45322A), Color(0xFF221812)),
+      StatTone.lavender: (Color(0xFF4A2742), Color(0xFF26131F)),
+      StatTone.periwinkle: (Color(0xFF263459), Color(0xFF141C33)),
+    },
+    {
+      StatTone.teal: (
+        top: Color(0xFF1E3532),
+        bottom: Color(0xFF162724),
+        ink: Color(0xFF9FD8CF),
+        sub: Color(0xFF7DB5AC),
+      ),
+      StatTone.olive: (
+        top: Color(0xFF2B3320),
+        bottom: Color(0xFF1F2617),
+        ink: Color(0xFFC3D89A),
+        sub: Color(0xFF9FB57A),
+      ),
+      StatTone.clay: (
+        top: Color(0xFF3A2519),
+        bottom: Color(0xFF2B1B12),
+        ink: Color(0xFFF2B394),
+        sub: Color(0xFFCB9175),
+      ),
+      StatTone.mustard: (
+        top: Color(0xFF362D17),
+        bottom: Color(0xFF282110),
+        ink: Color(0xFFE6CB7C),
+        sub: Color(0xFFC0A762),
+      ),
+      StatTone.espresso: (
+        top: Color(0xFF332620),
+        bottom: Color(0xFF251C17),
+        ink: Color(0xFFE6D3C6),
+        sub: Color(0xFFBBA698),
+      ),
+      StatTone.lavender: (
+        top: Color(0xFF33232F),
+        bottom: Color(0xFF261A23),
+        ink: Color(0xFFE8C9E0),
+        sub: Color(0xFFC2A0BA),
+      ),
+      StatTone.periwinkle: (
+        top: Color(0xFF222A3D),
+        bottom: Color(0xFF1A2030),
+        ink: Color(0xFFC3CFF2),
+        sub: Color(0xFF9DABD2),
+      ),
+    },
+  );
 
   @override
   StatColors copyWith() => this;

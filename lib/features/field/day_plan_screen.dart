@@ -68,24 +68,17 @@ class DayPlanScreen extends ConsumerWidget {
     final plan = ref.watch(dayPlanProvider);
     return PageBody(
       onRefresh: () => ref.refresh(dayPlanProvider.future),
-      header: Row(
-        children: [
-          IconTile(
-            AppIcons.left,
-            semanticLabel: 'Back',
-            alignment: Alignment.centerLeft,
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
-          Expanded(child: Text('Day plan', style: context.text.title)),
-          IconTile(
-            AppIcons.plus,
-            semanticLabel: 'Add stops',
-            color: context.colors.accent,
-            background: context.colors.accentTint,
-            alignment: Alignment.centerRight,
-            onTap: () => _add(context, ref),
-          ),
-        ],
+      header: PageHeader(
+        'Day plan',
+        onBack: () => Navigator.of(context).maybePop(),
+        trailing: IconTile(
+          AppIcons.plus,
+          semanticLabel: 'Add stops',
+          color: context.colors.accent,
+          background: context.colors.accentTint,
+          alignment: Alignment.centerRight,
+          onTap: () => _add(context, ref),
+        ),
       ),
       children: plan.when(
         loading: () => [

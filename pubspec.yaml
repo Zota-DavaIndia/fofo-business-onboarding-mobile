@@ -34,6 +34,7 @@ flutter:
   uses-material-design: false
   assets:
     - assets/brand/
+    - assets/emoji/
   fonts:
     - family: Montserrat
       fonts:

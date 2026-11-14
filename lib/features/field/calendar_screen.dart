@@ -116,24 +116,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final dayItems = byDay[selected] ?? const <CalendarItem>[];
     return PageBody(
       onRefresh: () => ref.refresh(calendarProvider(monthKey(_month)).future),
-      header: Row(
-        children: [
-          IconTile(
-            AppIcons.left,
-            semanticLabel: 'Back',
-            alignment: Alignment.centerLeft,
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
-          Expanded(child: Text('Calendar', style: context.text.title)),
-          IconTile(
-            AppIcons.plus,
-            semanticLabel: 'Schedule an activity',
-            color: c.accent,
-            background: c.accentTint,
-            alignment: Alignment.centerRight,
-            onTap: _addActivity,
-          ),
-        ],
+      header: PageHeader(
+        'Calendar',
+        onBack: () => Navigator.of(context).maybePop(),
+        trailing: IconTile(
+          AppIcons.plus,
+          semanticLabel: 'Schedule an activity',
+          color: c.accent,
+          background: c.accentTint,
+          alignment: Alignment.centerRight,
+          onTap: _addActivity,
+        ),
       ),
       children: [
         AppCard(

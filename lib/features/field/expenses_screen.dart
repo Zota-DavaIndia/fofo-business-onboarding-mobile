@@ -93,27 +93,20 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
     final drafts = data.value?.items.where((e) => e.canEdit).toList() ?? const <Expense>[];
     return PageBody(
       onRefresh: () => ref.refresh(expensesProvider(monthKey(month)).future),
-      header: Row(
-        children: [
-          IconTile(
-            AppIcons.left,
-            semanticLabel: 'Back',
-            alignment: Alignment.centerLeft,
-            onTap: () => Navigator.of(context).maybePop(),
-          ),
-          Expanded(child: Text('Expenses', style: context.text.title)),
-          IconTile(
-            AppIcons.plus,
-            semanticLabel: 'Add an expense',
-            color: context.colors.accent,
-            background: context.colors.accentTint,
-            alignment: Alignment.centerRight,
-            onTap: () async {
-              final saved = await pushForm<bool>(context, const ExpenseFormScreen());
-              if (saved == true) _changed(ref);
-            },
-          ),
-        ],
+      header: PageHeader(
+        'Expenses',
+        onBack: () => Navigator.of(context).maybePop(),
+        trailing: IconTile(
+          AppIcons.plus,
+          semanticLabel: 'Add an expense',
+          color: context.colors.accent,
+          background: context.colors.accentTint,
+          alignment: Alignment.centerRight,
+          onTap: () async {
+            final saved = await pushForm<bool>(context, const ExpenseFormScreen());
+            if (saved == true) _changed(ref);
+          },
+        ),
       ),
       bottom: drafts.isEmpty
           ? null

@@ -5,8 +5,8 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/skeleton.dart';
 
-/// Gradient card for one Home counter. The number and label sit at the
-/// bottom, so cards in the same row line up when one label wraps.
+/// Light gradient card for one Home counter, with the number in the tone's deep shade. The number and
+/// label sit at the bottom, so cards in the same row line up when one label wraps.
 class StatCard extends StatelessWidget {
   const StatCard({
     super.key,
@@ -31,8 +31,8 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (top, bottom) = context.stats.of(tone);
-    const fg = Color(0xFFFFFFFF);
+    final t = context.stats.tint(tone);
+    final fg = t.ink;
     return Semantics(
       label: '$label: ${value ?? 'loading'}${caption == null ? '' : ', $caption'}',
       button: onTap != null,
@@ -43,7 +43,7 @@ class StatCard extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(Radii.card + 2),
-            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [top, bottom]),
+            gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [t.top, t.bottom]),
           ),
           child: Padding(
             padding: const EdgeInsets.all(Space.lg),
@@ -55,7 +55,7 @@ class StatCard extends StatelessWidget {
                   height: 32,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: fg.withValues(alpha: 0.18),
+                    color: fg.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(Radii.tile - 1),
                   ),
                   child: AppIcon(icon, size: Sizes.iconSmall + 1, color: fg),
@@ -72,13 +72,12 @@ class StatCard extends StatelessWidget {
                     label: 'Loading $label',
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 5),
-                      child: Bone(width: 40, height: 24, color: fg.withValues(alpha: 0.22)),
+                      child: Bone(width: 40, height: 24, color: fg.withValues(alpha: 0.15)),
                     ),
                   ),
                 const SizedBox(height: 2),
-                Text(label, style: context.text.label.copyWith(color: fg.withValues(alpha: 0.92))),
-                if (caption != null)
-                  Text(caption!, style: context.text.caption.copyWith(color: fg.withValues(alpha: 0.78))),
+                Text(label, style: context.text.label.copyWith(color: fg)),
+                if (caption != null) Text(caption!, style: context.text.caption.copyWith(color: t.sub)),
               ],
             ),
           ),

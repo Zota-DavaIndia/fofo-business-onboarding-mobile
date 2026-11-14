@@ -145,6 +145,7 @@ lib/
 assets/icons/   SVG sources for the icon set
 assets/brand/   davaindia lettering from the official logo (light and dark, 1x to 3x)
 assets/fonts/   Montserrat (SIL Open Font License)
+assets/emoji/   waving hand from Noto Emoji by Google (Apache License 2.0)
 scripts/        icon set and app icon generators
 test/           unit and widget tests
 env/            build settings for staging and local runs
@@ -157,6 +158,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, conventions and the pull reque
 ## License
 
 Proprietary. The source is public only so release builds can be downloaded. See [LICENSE](LICENSE).
+
+The waving hand image in `assets/emoji` is from [Noto Emoji](https://github.com/googlefonts/noto-emoji) by Google, used under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 ## Contact
 

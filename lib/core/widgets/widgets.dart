@@ -171,6 +171,7 @@ class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final ButtonKind kind;
+
   final AppIconData? icon;
   final bool loading;
 
@@ -464,6 +465,17 @@ class MessageBlock extends StatelessWidget {
 }
 
 /// Solid bar pinned to the bottom of a screen for its main actions.
+/// Space under the last control of a bottom bar. iOS's home indicator strip is see-through, so the inset
+/// alone leaves room. Android's 3-button bar is often painted solid, so the gap goes on top of the inset
+/// or the buttons look glued to it.
+double bottomBarGap(BuildContext context) {
+  final inset = MediaQuery.paddingOf(context).bottom;
+  return switch (Theme.of(context).platform) {
+    TargetPlatform.iOS || TargetPlatform.macOS => inset > Space.lg ? inset : Space.lg,
+    _ => inset + Space.lg,
+  };
+}
+
 class ActionBar extends StatelessWidget {
   const ActionBar({super.key, required this.children});
 
@@ -475,9 +487,8 @@ class ActionBar extends StatelessWidget {
       color: context.colors.card,
       child: Surface(
         level: SurfaceLevel.card,
-        child: SafeArea(
-          top: false,
-          minimum: const EdgeInsets.only(bottom: Space.lg),
+        child: Padding(
+          padding: EdgeInsets.only(bottom: bottomBarGap(context)),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(Space.screen, Space.lg, Space.screen, 0),
             child: Column(

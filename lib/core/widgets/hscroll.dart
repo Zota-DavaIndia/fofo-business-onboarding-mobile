@@ -3,10 +3,9 @@ import 'package:material_ui/material_ui.dart';
 
 import '../theme/tokens.dart';
 
-/// A row that scrolls sideways. It runs edge to edge (cancelling the page's
-/// side padding, then putting it back inside), and fades its content out at
-/// whichever edge still has more to scroll, so the cut-off card reads as
-/// "more this way". No fade at an end that's reached.
+/// A row that scrolls sideways. It runs edge to edge (cancelling the page's side padding, then putting it
+/// back inside) and fades its content out on whichever side still has more to scroll, so the cut-off card
+/// reads as "more this way". An end that's reached stays sharp, so the first card sits crisp on the padding.
 class HScroll extends StatefulWidget {
   const HScroll({super.key, required this.children, this.spacing = Space.sm, this.inset = Space.screen});
 
@@ -15,6 +14,9 @@ class HScroll extends StatefulWidget {
 
   /// The page's side padding, cancelled so the row can bleed to the edges.
   final double inset;
+
+  /// How far the fade reaches from the screen edge: the side padding and well into the row.
+  static const fadeWidth = 56.0;
 
   @override
   State<HScroll> createState() => _HScrollState();
@@ -55,7 +57,7 @@ class _HScrollState extends State<HScroll> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, box) {
-        final fade = 28 / (box.maxWidth + widget.inset * 2);
+        final fade = HScroll.fadeWidth / (box.maxWidth + widget.inset * 2);
         return _Bleed(
           inset: widget.inset,
           child: ShaderMask(

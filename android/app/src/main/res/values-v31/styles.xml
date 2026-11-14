@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Android 12+ always shows a system splash: page colour with the ff mark. -->
+    <!-- Android 12+ always shows a system splash: the splash colour, with an empty icon. -->
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">@drawable/launch_background</item>
         <item name="android:windowSplashScreenBackground">@color/splash_background</item>
