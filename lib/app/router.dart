@@ -51,7 +51,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         branches: [
           for (final m in tabModules)
             StatefulShellBranch(
-              routes: [GoRoute(path: m.path, builder: (context, _) => m.builder(context))],
+              routes: [GoRoute(path: m.path, builder: (context, _) => m.builder(context), routes: m.routes)],
             ),
         ],
       ),

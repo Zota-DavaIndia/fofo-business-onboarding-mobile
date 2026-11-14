@@ -1,9 +1,11 @@
 import 'package:flutter/widgets.dart';
+import 'package:go_router/go_router.dart';
 
 import '../core/auth/permissions.dart';
 import '../core/auth/user.dart';
 import '../core/icons/app_icon.dart';
 import '../features/home/home_screen.dart';
+import '../features/leads/lead_detail_screen.dart';
 import '../features/leads/leads_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/profile/profile_screen.dart';
@@ -19,6 +21,7 @@ class AppModule {
     required this.path,
     required this.builder,
     this.permission,
+    this.routes = const [],
   });
 
   final String id;
@@ -27,6 +30,9 @@ class AppModule {
   final String path;
   final String? permission;
   final WidgetBuilder builder;
+
+  /// Screens opened from this tab that keep the tab bar visible.
+  final List<RouteBase> routes;
 
   bool allows(AppUser user) => permission == null || user.can(permission!);
 }
@@ -41,6 +47,12 @@ final tabModules = <AppModule>[
     path: '/leads',
     permission: Perm.leadsView,
     builder: (_) => const LeadsScreen(),
+    routes: [
+      GoRoute(
+        path: ':id',
+        builder: (_, state) => LeadDetailScreen(id: int.parse(state.pathParameters['id']!)),
+      ),
+    ],
   ),
   AppModule(
     id: 'visits',

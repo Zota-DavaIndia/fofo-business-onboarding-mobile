@@ -11,6 +11,9 @@ All notable changes to this project are documented here. The format follows [Kee
 - App icon for Android and iOS, generated from vector outlines, and the same logo inside the app.
 - Montserrat as the app font, bundled with the app.
 - Location, camera, photo, notification and install permissions declared for the coming features.
+- Sign-in with email or mobile; enquirers sign in with their mobile and a code to track their application.
+- Leads tab with search, status filters and a lead detail page with contact, call centre notes, details, onboarding and timeline.
+- Today's visits on Home, and Home counts that open Leads on the matching list.
 
 ### Changed
 
@@ -27,5 +30,4 @@ All notable changes to this project are documented here. The format follows [Kee
 - Profile with contact details, app version, device ID and sign out.
 - Custom icon set generated from SVG files.
 - Light and dark themes.
-- Demo mode with sample data for trying the app without a backend.
 - CI checks, and a release workflow that publishes signed APKs to GitHub Releases.

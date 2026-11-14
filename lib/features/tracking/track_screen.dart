@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/brand/logo.dart';
+import '../../core/format.dart';
 import '../../core/icons/app_icon.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
@@ -250,13 +251,4 @@ class _ContactRow extends StatelessWidget {
             ),
     );
   }
-}
-
-const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-/// "17 Oct 2026, 3:01 am" in the phone's time zone.
-String formatDate(DateTime d) {
-  final h = d.hour % 12 == 0 ? 12 : d.hour % 12;
-  final m = d.minute.toString().padLeft(2, '0');
-  return '${d.day} ${_months[d.month - 1]} ${d.year}, $h:$m ${d.hour < 12 ? 'am' : 'pm'}';
 }

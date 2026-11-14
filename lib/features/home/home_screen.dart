@@ -4,12 +4,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/permissions.dart';
 import '../../core/auth/session.dart';
+import '../../core/format.dart';
 import '../../core/icons/app_icon.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/page.dart';
 import '../../core/widgets/widgets.dart';
 import '../../core/brand/logo.dart';
+import '../leads/lead.dart';
+import '../visits/visit.dart';
 import 'dashboard.dart';
 import 'stat_card.dart';
 
@@ -33,7 +36,13 @@ class HomeScreen extends ConsumerWidget {
     final territories = user.territories.map((t) => t.name).join(', ');
 
     return PageBody(
-      onRefresh: canSeeCounts ? () => ref.refresh(dashboardProvider.future) : null,
+      onRefresh: () async {
+        ref.invalidate(todaysVisitsProvider);
+        if (canSeeCounts) {
+          ref.invalidate(dashboardProvider);
+          await ref.read(dashboardProvider.future);
+        }
+      },
       children: [
         Row(
           children: [
@@ -60,29 +69,38 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         if (dashboard != null) ...[const SizedBox(height: Space.xxs), _Counters(dashboard: dashboard)],
-        const SectionLabel("Today's visits"),
-        AppCard(child: Text('No visits scheduled for today.', style: context.text.secondary)),
+        if (user.can(Perm.visitsManage)) ...[const SectionLabel("Today's visits"), const _TodaysVisits()],
       ],
     );
   }
 }
 
-class _Counters extends StatelessWidget {
+class _Counters extends ConsumerWidget {
   const _Counters({required this.dashboard});
 
   final AsyncValue<Dashboard> dashboard;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final d = dashboard.value;
     String n(String status) => d == null ? '–' : '${d.count(status)}';
     final items = [
-      ('New assignments', n('ASSIGNED'), AppIcons.leads, StatTone.clay),
-      ('Visits scheduled', n('VISIT_SCHEDULED'), AppIcons.visit, StatTone.olive),
-      ('Follow-ups', n('FOLLOW_UP'), AppIcons.followUp, StatTone.mustard),
-      ('Qualified', n('QUALIFIED'), AppIcons.check, StatTone.teal),
+      ('New assignments', n('ASSIGNED'), AppIcons.leads, StatTone.clay, LeadFilter.assigned),
+      ('Visits scheduled', n('VISIT_SCHEDULED'), AppIcons.visit, StatTone.olive, LeadFilter.visitScheduled),
+      ('Follow-ups', n('FOLLOW_UP'), AppIcons.followUp, StatTone.mustard, LeadFilter.followUp),
+      ('Qualified', n('QUALIFIED'), AppIcons.check, StatTone.teal, LeadFilter.qualified),
     ];
-    Widget card(int i) => StatCard(label: items[i].$1, value: items[i].$2, icon: items[i].$3, tone: items[i].$4);
+    Widget card(int i) => StatCard(
+      label: items[i].$1,
+      value: items[i].$2,
+      icon: items[i].$3,
+      tone: items[i].$4,
+      onTap: () {
+        // Opens the Leads tab on the list behind this number.
+        ref.read(leadFilterProvider.notifier).set(items[i].$5);
+        context.go('/leads');
+      },
+    );
     // Each row takes the height of its tallest card; the cards stretch to
     // match, and their text stays on the bottom edge.
     Widget row(int a, int b) => IntrinsicHeight(
@@ -107,6 +125,38 @@ class _Counters extends StatelessWidget {
             child: Text("Couldn't load counts. Pull down to retry.", style: context.text.label),
           ),
       ],
+    );
+  }
+}
+
+class _TodaysVisits extends ConsumerWidget {
+  const _TodaysVisits();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final visits = ref.watch(todaysVisitsProvider);
+    return visits.when(
+      loading: () => AppCard(child: Text('Loading today\'s visits…', style: context.text.secondary)),
+      error: (_, _) =>
+          AppCard(child: Text("Couldn't load today's visits. Pull down to retry.", style: context.text.secondary)),
+      data: (list) => list.isEmpty
+          ? AppCard(child: Text('No visits scheduled for today.', style: context.text.secondary))
+          : GroupedList(
+              children: [
+                for (final v in list)
+                  ListRow(
+                    title: v.leadName,
+                    subtitle: [v.leadNo, v.address].whereType<String>().join(' · '),
+                    leading: SizedBox(
+                      width: 64,
+                      child: Text(
+                        v.scheduledAt == null ? '–' : formatTime(v.scheduledAt!),
+                        style: context.text.bodyStrong,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
     );
   }
 }

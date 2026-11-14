@@ -23,28 +23,29 @@ A field user (an RCM today, other designations later) signs in, works the leads 
 
 ## Screenshots
 
-| Home | Home, dark | Profile |
-|---|---|---|
-| <img src=".github/media/home-light.png" width="240" alt="Home screen with lead counts"> | <img src=".github/media/home-dark.png" width="240" alt="Home screen in dark mode"> | <img src=".github/media/profile-light.png" width="240" alt="Profile screen"> |
+| Home | Home, dark | Leads | Profile |
+|---|---|---|---|
+| <img src=".github/media/home-light.png" width="200" alt="Home screen with lead counts"> | <img src=".github/media/home-dark.png" width="200" alt="Home screen in dark mode"> | <img src=".github/media/leads-light.png" width="200" alt="Leads list with status filters"> | <img src=".github/media/profile-light.png" width="200" alt="Profile screen"> |
 
-Taken in demo mode with sample data.
+Taken on the staging server with a test field account.
 
 ## Features
 
 Built so far:
 
-- Email and password sign-in, with the phone's device ID sent for admin approval.
+- Sign-in with email or mobile, then password, with the phone's device ID sent for admin approval.
+- Enquiry tracking: someone who applied signs in with their mobile and a code and sees where their application stands.
 - Opens offline using the last signed-in session.
 - Bottom tabs (Leads, Visits, Home, Onboard, Profile) shown according to the user's permissions; alerts open from the bell on Home.
-- Home with greeting, territory and lead counts as gradient cards.
+- Home with greeting, territory, lead counts and today's visits. Tapping a count opens Leads on that list.
+- Leads: search by name, mobile or lead number, filter by status, and open a lead to see contact details, the call centre's notes, shop details, onboarding progress and the timeline.
 - Profile tab with contact details, app version, a copyable device ID and sign out.
 - Light and dark themes that follow the phone setting.
 - Custom icon set drawn from SVG sources, with no icon font or SVG library.
 - Launcher icon: davaindia with an italic "fa" under it on clay. Inside the app, the logo is the "fa" mark in a clay circle followed by the official davaindia lettering. Both built by `scripts/app_icon/generate.py`.
 - Montserrat, bundled with the app.
-- Demo mode that answers the API with sample data.
 
-Planned next: the lead list and detail, visit scheduling with GPS check-in, the onboarding steps, payment recording, push notifications, and the in-app updater that installs new versions from GitHub Releases.
+Planned next: lead actions (calls, follow-ups), visit scheduling with GPS check-in, the onboarding steps, payment recording, push notifications, and the in-app updater that installs new versions from GitHub Releases.
 
 ## Download
 
@@ -62,14 +63,6 @@ Requirements: Flutter 3.44 or newer (stable) and Xcode with an iOS simulator.
 ```bash
 flutter pub get
 ```
-
-Try the app with sample data, no backend needed:
-
-```bash
-flutter run --dart-define-from-file=env/demo.json
-```
-
-Any email and password signs in.
 
 Run against the staging CRM:
 
@@ -138,7 +131,7 @@ assets/brand/   davaindia lettering from the official logo (light and dark, 1x t
 assets/fonts/   Montserrat (SIL Open Font License)
 scripts/        icon set and app icon generators
 test/           unit and widget tests
-env/            build settings for demo and local runs
+env/            build settings for staging and local runs
 ```
 
 ## Contributing
