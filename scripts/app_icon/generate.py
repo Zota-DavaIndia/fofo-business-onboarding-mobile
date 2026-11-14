@@ -1,9 +1,11 @@
 """Builds the launcher icon and the "fa" mark used in the in-app logo.
 
-The mark is "fa" in Montserrat ExtraBold Italic, white on the app's clay
-colour. Letters are shaped with HarfBuzz and converted to vector paths, so
-neither the icon nor the app needs the font at runtime. Montserrat is under
-the SIL Open Font License (see scripts/app_icon/fonts/OFL.txt).
+The icon is the davaindia lettering (taken from the official logo in
+assets/brand, recoloured white) with "fa" in Montserrat ExtraBold Italic
+under its right end, on the app's clay colour. "fa" is shaped with HarfBuzz
+and converted to vector paths, so neither the icon nor the app needs the
+font at runtime. Montserrat is under the SIL Open Font License (see
+scripts/app_icon/fonts/OFL.txt).
 
 Needs fontTools and uharfbuzz (pip install fonttools uharfbuzz),
 rsvg-convert and ImageMagick.
@@ -11,6 +13,7 @@ rsvg-convert and ImageMagick.
     python3 scripts/app_icon/generate.py
 """
 
+import base64
 import json
 import subprocess
 from pathlib import Path
@@ -26,13 +29,20 @@ ROOT = Path(__file__).resolve().parents[2]
 OUT = Path(__file__).resolve().parent / "out"
 FONT = Path(__file__).resolve().parent / "fonts/Montserrat-ExtraBoldItalic.ttf"
 DART_OUT = ROOT / "lib/core/brand/logo_paths.g.dart"
+LETTERING = ROOT / "assets/brand/3.0x/lettering.png"
+# The "davaindia" line of the lettering image, without the (c) mark.
+WORD_CROP = "614x104+0+0"
+WORD_ASPECT = 614 / 104
 
 CLAY = "#A4441A"
 CLAY_LIGHT = "#F49A6A"
 DARK_TILE = "#1D1916"
 WHITE = "#FFFFFF"
 
-FA_SHARE = 0.46  # height of "fa" as a share of the visible icon
+# Layout as shares of the visible icon: lettering width, "fa" height, gap.
+WORD_SHARE = 0.64
+FA_SHARE = 0.38
+GAP_SHARE = 0.04
 
 
 class Mark:
@@ -77,13 +87,44 @@ class Mark:
 MARK = Mark()
 
 
-def svg_icon(size, bg, fg, radius=0):
+def word_image():
+    """The davaindia line of the official lettering, in white, as a data URI."""
+    white = OUT / "davaindia-white.png"
+    run("magick", str(LETTERING), "-crop", WORD_CROP, "+repage", "-fill", "white", "-colorize", "100", str(white))
+    return "data:image/png;base64," + base64.b64encode(white.read_bytes()).decode()
+
+
+def icon_art(word, visible, offset, fa_color):
+    """davaindia on top, "fa" below it, right edges aligned, centred in a
+    visible x visible area that starts at (offset, offset)."""
+    ww = visible * WORD_SHARE
+    wh = ww / WORD_ASPECT
+    fh = visible * FA_SHARE
+    gap = visible * GAP_SHARE
+    top = offset + (visible - (wh + gap + fh)) / 2
+    left = offset + (visible - ww) / 2
     pen = SVGPathPen(MARK.glyphs)
-    MARK.draw_centered(pen, size * FA_SHARE, size)
+    MARK.draw(pen, fh, left + ww - fh * MARK.aspect(), top + wh + gap)
+    return (
+        f'<image x="{left:.2f}" y="{top:.2f}" width="{ww:.2f}" height="{wh:.2f}" href="{word}"/>'
+        f'<path d="{pen.getCommands()}" fill="{fa_color}"/>'
+    )
+
+
+def svg_icon(word, size, bg, fa_color, radius=0):
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}" width="{size}" height="{size}">'
-        f'<rect width="{size}" height="{size}" rx="{radius}" fill="{bg}"/>'
-        f'<path d="{pen.getCommands()}" fill="{fg}"/></svg>'
+        f'<rect width="{size}" height="{size}" rx="{radius}" fill="{bg}"/>{icon_art(word, size, 0, fa_color)}</svg>'
+    )
+
+
+def svg_foreground(word):
+    """Android adaptive foreground on the 108 dp canvas. About 72 dp is
+    visible under the launcher mask; the art stays inside the 66 dp safe
+    circle."""
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">'
+        f"{icon_art(word, 72, 18, WHITE)}</svg>"
     )
 
 
@@ -112,23 +153,6 @@ class DartPen(BasePen):
 
     def _closePath(self):
         self.calls.append("p.close();")
-
-
-def vector_drawable(color):
-    """Android adaptive icon layer on the 108 dp canvas. About 72 dp of it is
-    visible under the launcher mask; "fa" sits well inside the 66 dp safe
-    circle."""
-    pen = SVGPathPen(MARK.glyphs)
-    MARK.draw_centered(pen, 72 * FA_SHARE, 108)
-    return f"""<?xml version="1.0" encoding="utf-8"?>
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path android:fillColor="{color}" android:pathData="{pen.getCommands()}"/>
-</vector>
-"""
 
 
 def dart_mark():
@@ -163,10 +187,11 @@ def png(svg_file, out, size, opaque=None):
 
 def main():
     OUT.mkdir(exist_ok=True)
+    word = word_image()
 
     # iOS: full-bleed square; the system applies the rounded mask.
-    (OUT / "ios.svg").write_text(svg_icon(1024, CLAY, WHITE))
-    (OUT / "ios-dark.svg").write_text(svg_icon(1024, DARK_TILE, CLAY_LIGHT))
+    (OUT / "ios.svg").write_text(svg_icon(word, 1024, CLAY, WHITE))
+    (OUT / "ios-dark.svg").write_text(svg_icon(word, 1024, DARK_TILE, CLAY_LIGHT))
     icons = ROOT / "ios/Runner/Assets.xcassets/AppIcon.appiconset"
     for old in icons.glob("*.png"):
         old.unlink()
@@ -182,19 +207,34 @@ def main():
     }
     (icons / "Contents.json").write_text(json.dumps(contents, indent=2) + "\n")
 
-    # Android 8+: clay background, white "fa", and a themed single-colour layer.
+    # Android 8+: clay background colour, PNG foreground per density (the
+    # lettering is raster, so a vector drawable can't hold it), and the same
+    # white layer for Android 13 themed icons.
     res = ROOT / "android/app/src/main/res"
-    (res / "drawable/ic_launcher_foreground.xml").write_text(vector_drawable(WHITE))
-    (res / "drawable/ic_launcher_monochrome.xml").write_text(vector_drawable(WHITE))
+    for old in ("drawable/ic_launcher_foreground.xml", "drawable/ic_launcher_monochrome.xml"):
+        (res / old).unlink(missing_ok=True)
+    (OUT / "android-foreground.svg").write_text(svg_foreground(word))
+    densities = {"mdpi": 1, "hdpi": 1.5, "xhdpi": 2, "xxhdpi": 3, "xxxhdpi": 4}
+    for folder, scale in densities.items():
+        png(OUT / "android-foreground.svg", res / f"mipmap-{folder}/ic_launcher_foreground.png", round(108 * scale))
     (res / "values/ic_launcher_background.xml").write_text(
         '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
         f'    <color name="ic_launcher_background">{CLAY}</color>\n</resources>\n'
     )
+    (res / "mipmap-anydpi-v26/ic_launcher.xml").write_text(
+        """<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+    <monochrome android:drawable="@mipmap/ic_launcher_foreground"/>
+</adaptive-icon>
+"""
+    )
 
     # Android 7: round PNGs.
-    (OUT / "android-legacy.svg").write_text(svg_icon(432, CLAY, WHITE, radius=216))
-    for folder, px in {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}.items():
-        png(OUT / "android-legacy.svg", res / f"mipmap-{folder}/ic_launcher.png", px)
+    (OUT / "android-legacy.svg").write_text(svg_icon(word, 432, CLAY, WHITE, radius=216))
+    for folder, scale in densities.items():
+        png(OUT / "android-legacy.svg", res / f"mipmap-{folder}/ic_launcher.png", round(48 * scale))
 
     dart_mark()
 
