@@ -47,7 +47,7 @@ Built so far:
 - Launcher icon: davaindia with an italic "ff" (field force) under it on clay. Inside the app, the logo is the official davaindia icon and word, with "FIELD FORCE" in clay caps under the word. Both built by `scripts/app_icon/generate.py`.
 - Montserrat, bundled with the app.
 
-Planned next: the onboarding steps, payment recording, push notifications, and the in-app updater that installs new versions from GitHub Releases.
+Planned next: push notifications, the in-app updater that installs new versions from GitHub Releases, and field force tools (expenses, leave, start and end of day, tickets, day plan).
 
 ## Download
 
@@ -108,10 +108,10 @@ python3 scripts/app_icon/generate.py
 
 Android builds are made only by GitHub Actions.
 
-1. Bump `version` in `pubspec.yaml`, for example `0.2.0+2`.
+1. Bump `version` in `pubspec.yaml`, for example `1.1.0+2`.
 2. Merge to `main`.
 
-The release workflow then tests, builds and signs the APK, checks the signature, tags `v0.2.0` and publishes the APK, `version.json` and `SHA256SUMS`. It needs these repository settings:
+The release workflow then tests, builds and signs the APK, checks the signature, tags `v1.1.0` and publishes the APK, `version.json` and `SHA256SUMS`. It needs these repository settings:
 
 | Name | Kind | Purpose |
 |---|---|---|
@@ -119,7 +119,7 @@ The release workflow then tests, builds and signs the APK, checks the signature,
 | `ANDROID_KEYSTORE_PASSWORD` | secret | Keystore password |
 | `ANDROID_KEY_ALIAS` | secret | Key alias |
 | `ANDROID_KEY_PASSWORD` | secret | Key password |
-| `API_BASE_URL` | variable | Production CRM API address baked into release builds; releases are skipped until it's set. Staging is in `env/staging.json` |
+| `API_BASE_URL` | variable | Production CRM API address baked into release builds. Until it's set, releases use the staging API from `env/staging.json` |
 
 ## Project structure
 

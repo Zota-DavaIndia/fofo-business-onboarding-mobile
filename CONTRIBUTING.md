@@ -38,7 +38,7 @@ CI runs the same checks plus an Android debug build.
 
 ## Releasing
 
-Bump `version` in `pubspec.yaml` (for example `0.2.0+2`) and merge to `main`. The release workflow builds and signs the APK, tags `v0.2.0` and publishes it. Installed apps pick it up through the in-app updater.
+Bump `version` in `pubspec.yaml` (for example `1.1.0+2`) and merge to `main`. The release workflow builds and signs the APK, tags `v1.1.0` and publishes it. Installed apps pick it up through the in-app updater.
 
 ## Reporting bugs
 

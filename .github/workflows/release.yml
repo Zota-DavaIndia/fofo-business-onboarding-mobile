@@ -1,7 +1,9 @@
 name: Release
 
 # Publishes a signed APK when the version in pubspec.yaml changes on main.
-# The app's updater reads version.json from the latest release.
+# The app's updater reads version.json from the latest release. Builds use
+# the API_BASE_URL repository variable, or the staging API from
+# env/staging.json until that variable is set.
 
 on:
   push:
@@ -35,11 +37,15 @@ jobs:
           if git rev-parse -q --verify "refs/tags/v$name" >/dev/null; then
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "::notice::v$name is already released. Bump the version in pubspec.yaml to publish."
-          elif [ -z "${{ vars.API_BASE_URL }}" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::Releases are off until the API_BASE_URL repository variable is set."
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ -n "${{ vars.API_BASE_URL }}" ]; then
+            echo "api=${{ vars.API_BASE_URL }}" >> "$GITHUB_OUTPUT"
+            echo "env=production" >> "$GITHUB_OUTPUT"
+          else
+            echo "api=$(jq -r .API_BASE_URL env/staging.json)" >> "$GITHUB_OUTPUT"
+            echo "env=staging" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Check signing secrets
@@ -89,9 +95,9 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           flutter build apk --release \
-            --dart-define=APP_ENV=production \
+            --dart-define=APP_ENV=${{ steps.version.outputs.env }} \
             --dart-define=APP_VERSION=${{ steps.version.outputs.name }} \
-            --dart-define=API_BASE_URL=${{ vars.API_BASE_URL }}
+            --dart-define=API_BASE_URL=${{ steps.version.outputs.api }}
 
       - name: Verify signature
         if: steps.version.outputs.skip == 'false'

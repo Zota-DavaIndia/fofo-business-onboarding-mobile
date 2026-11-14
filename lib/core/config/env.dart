@@ -15,7 +15,7 @@ abstract final class Env {
   );
 
   /// Set by the release build from pubspec.yaml.
-  static const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '0.1.0');
+  static const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
 
   static const isProduction = appEnv == 'production';
 }
