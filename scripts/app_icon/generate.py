@@ -35,9 +35,15 @@ WORD_CROP = "614x104+0+0"
 WORD_ASPECT = 614 / 104
 
 CLAY = "#A4441A"
+CLAY_DARK = "#A94A1E"
 CLAY_LIGHT = "#F49A6A"
 DARK_TILE = "#1D1916"
 WHITE = "#FFFFFF"
+PAGE = "#F6F3EF"
+PAGE_DARK = "#14110E"
+
+# Launch screen: the "fa" circle, 104 pt/dp across, centred on the screen.
+SPLASH_MARK = 104
 
 # Layout as shares of the visible icon: lettering width, "fa" height, gap.
 WORD_SHARE = 0.64
@@ -174,6 +180,82 @@ def dart_mark():
     DART_OUT.write_text("\n".join(lines) + "\n")
 
 
+def svg_mark(canvas, diameter, clay):
+    """The "fa" circle centred on a transparent canvas."""
+    pen = SVGPathPen(MARK.glyphs)
+    MARK.draw_centered(pen, diameter * 0.48, canvas)
+    r = diameter / 2
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {canvas} {canvas}" width="{canvas}" height="{canvas}">'
+        f'<circle cx="{canvas / 2}" cy="{canvas / 2}" r="{r}" fill="{clay}"/>'
+        f'<path d="{pen.getCommands()}" fill="{WHITE}"/></svg>'
+    )
+
+
+def splash():
+    """Native launch screens: page colour with the "fa" circle in the centre,
+    matching the first frame of the Flutter splash."""
+    (OUT / "mark.svg").write_text(svg_mark(SPLASH_MARK, SPLASH_MARK, CLAY))
+    (OUT / "mark-dark.svg").write_text(svg_mark(SPLASH_MARK, SPLASH_MARK, CLAY_DARK))
+
+    # iOS: the mark with a dark variant, and a named background colour. The
+    # asset is called LaunchMark rather than LaunchImage because iOS caches
+    # launch images by name and kept showing the old template image.
+    assets = ROOT / "ios/Runner/Assets.xcassets"
+    launch = assets / "LaunchMark.imageset"
+    launch.mkdir(exist_ok=True)
+    for old in launch.iterdir():
+        old.unlink()
+    images = []
+    for theme, svg in (("", "mark.svg"), ("-Dark", "mark-dark.svg")):
+        for scale in (1, 2, 3):
+            name = f"LaunchMark{theme}@{scale}x.png"
+            png(OUT / svg, launch / name, SPLASH_MARK * scale)
+            entry = {"filename": name, "idiom": "universal", "scale": f"{scale}x"}
+            if theme:
+                entry["appearances"] = [{"appearance": "luminosity", "value": "dark"}]
+            images.append(entry)
+    (launch / "Contents.json").write_text(
+        json.dumps({"images": images, "info": {"author": "xcode", "version": 1}}, indent=2) + "\n"
+    )
+
+    def rgb(hex_color):
+        return {f"{c}": f"0x{hex_color[i:i + 2]}" for c, i in (("red", 1), ("green", 3), ("blue", 5))}
+
+    colorset = assets / "LaunchBackground.colorset"
+    colorset.mkdir(exist_ok=True)
+    colors = {
+        "colors": [
+            {"color": {"color-space": "srgb", "components": {"alpha": "1.000", **rgb(PAGE)}}, "idiom": "universal"},
+            {
+                "appearances": [{"appearance": "luminosity", "value": "dark"}],
+                "color": {"color-space": "srgb", "components": {"alpha": "1.000", **rgb(PAGE_DARK)}},
+                "idiom": "universal",
+            },
+        ],
+        "info": {"author": "xcode", "version": 1},
+    }
+    (colorset / "Contents.json").write_text(json.dumps(colors, indent=2) + "\n")
+
+    # Android: the mark per density for the launch background (Android 7-11)
+    # and the Android 12+ splash icon (288 dp canvas, shown inside a 192 dp
+    # circle), with night variants.
+    res = ROOT / "android/app/src/main/res"
+    densities = {"mdpi": 1, "hdpi": 1.5, "xhdpi": 2, "xxhdpi": 3, "xxxhdpi": 4}
+    (OUT / "icon31.svg").write_text(svg_mark(288, SPLASH_MARK, CLAY))
+    (OUT / "icon31-dark.svg").write_text(svg_mark(288, SPLASH_MARK, CLAY_DARK))
+    for folder, scale in densities.items():
+        for night, mark, icon in (("", "mark.svg", "icon31.svg"), ("-night", "mark-dark.svg", "icon31-dark.svg")):
+            png(OUT / mark, res / f"drawable{night}-{folder}/splash_mark.png", round(SPLASH_MARK * scale))
+            png(OUT / icon, res / f"drawable{night}-{folder}/splash_icon.png", round(288 * scale))
+    for night, page in (("", PAGE), ("-night", PAGE_DARK)):
+        (res / f"values{night}").mkdir(exist_ok=True)
+        (res / f"values{night}/colors.xml").write_text(
+            '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
+            f'    <color name="splash_background">{page}</color>\n</resources>\n'
+        )
+
+
 def run(*args):
     subprocess.run(args, check=True)
 
@@ -237,6 +319,7 @@ def main():
         png(OUT / "android-legacy.svg", res / f"mipmap-{folder}/ic_launcher.png", round(48 * scale))
 
     dart_mark()
+    splash()
 
     png(OUT / "ios.svg", OUT / "preview-ios.png", 512)
     png(OUT / "ios-dark.svg", OUT / "preview-ios-dark.png", 512)

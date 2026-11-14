@@ -14,7 +14,6 @@ class AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
     final dark = Theme.of(context).brightness == Brightness.dark;
     final h = height;
     return Semantics(
@@ -24,16 +23,7 @@ class AppLogo extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: h,
-            height: h,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(color: c.primary, shape: BoxShape.circle),
-            child: CustomPaint(
-              size: Size(h * 0.5 * faSize.width / faSize.height, h * 0.5),
-              painter: _FaPainter(c.onPrimary),
-            ),
-          ),
+          FaMark(size: h),
           SizedBox(width: h * 0.28),
           Image.asset(
             dark ? 'assets/brand/lettering-dark.png' : 'assets/brand/lettering.png',
@@ -41,6 +31,28 @@ class AppLogo extends StatelessWidget {
             filterQuality: FilterQuality.medium,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The clay circle with a white italic "fa": the app icon's mark.
+class FaMark extends StatelessWidget {
+  const FaMark({super.key, required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: c.primary, shape: BoxShape.circle),
+      child: CustomPaint(
+        size: Size(size * 0.48 * faSize.width / faSize.height, size * 0.48),
+        painter: _FaPainter(c.onPrimary),
       ),
     );
   }
