@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.gitcs.davaindia.fa"
+    namespace = "com.gitcs.davaindia.ff"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -19,7 +19,7 @@ android {
     defaultConfig {
         // Never change this after the first release: updates only install
         // over an app with the same id and the same signing key.
-        applicationId = "com.gitcs.davaindia.fa"
+        applicationId = "com.gitcs.davaindia.ff"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

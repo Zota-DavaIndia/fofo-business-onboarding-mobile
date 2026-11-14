@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fofo_onboarding/app/app.dart';
 import 'package:fofo_onboarding/core/auth/session.dart';
 import 'package:fofo_onboarding/core/auth/user.dart';
+import 'package:fofo_onboarding/features/alerts/alerts.dart';
 import 'package:fofo_onboarding/features/home/dashboard.dart';
 import 'package:fofo_onboarding/features/leads/lead.dart';
 import 'package:fofo_onboarding/features/visits/visit.dart';
@@ -57,14 +58,27 @@ Future<void> _pump(WidgetTester tester, AppUser? user) async {
               'status_label': 'Follow Up',
             }),
           ];
+          // The visits_due queue holds the assigned lead in this fake.
+          if (ref.watch(leadQueueProvider)?.queue == 'visits_due') return [all.first];
           final status = f.query['status'];
           return status == null ? all : all.where((l) => l.status == status).toList();
         }),
         dashboardProvider.overrideWith(
           (ref) async => Dashboard.fromJson({
-            'by_status': {'ASSIGNED': 4},
+            'total': 5,
+            'by_status': {'ASSIGNED': 4, 'QUALIFIED': 1},
+            'attention': [
+              {
+                'key': 'visits_overdue',
+                'label': 'Visits overdue',
+                'count': 1,
+                'target': {'screen': 'leads', 'queue': 'visits_due'},
+              },
+            ],
+            'today': {'new_leads': 1, 'calls': 2, 'visits': 0, 'qualified': 0},
           }),
         ),
+        alertsProvider.overrideWith((ref) async => (items: const <Alert>[], unread: 0)),
       ],
       child: const FieldApp(),
     ),
@@ -81,13 +95,9 @@ void main() {
     expect(find.text('Profile'), findsOneWidget);
     expect(find.text('Visits'), findsNothing);
     expect(find.text('Onboard'), findsNothing);
-    expect(
-      find.text('Good morning, Arjun').evaluate().isNotEmpty ||
-          find.text('Good afternoon, Arjun').evaluate().isNotEmpty ||
-          find.text('Good evening, Arjun').evaluate().isNotEmpty,
-      isTrue,
-    );
-    expect(find.text('4'), findsOneWidget);
+    expect(find.text('Hi Arjun'), findsOneWidget);
+    expect(find.text('Visits overdue'), findsOneWidget);
+    expect(find.text('Total leads'), findsOneWidget);
   });
 
   testWidgets('a user with every permission sees all five tabs', (tester) async {
@@ -121,10 +131,11 @@ void main() {
     expect(find.text('Gaurav Mehta'), findsNothing);
   });
 
-  testWidgets('a Home card opens Leads on its list', (tester) async {
+  testWidgets('a Needs attention row opens Leads on its queue', (tester) async {
     await _pump(tester, _user(['leads.view', 'dashboard.view']));
-    await tester.tap(find.text('New assignments'));
+    await tester.tap(find.text('Visits overdue'));
     await tester.pumpAndSettle();
+    expect(find.text('Visits overdue  ✕'), findsOneWidget);
     expect(find.text('Gaurav Mehta'), findsOneWidget);
     expect(find.text('Rekha Choudhary'), findsNothing);
   });

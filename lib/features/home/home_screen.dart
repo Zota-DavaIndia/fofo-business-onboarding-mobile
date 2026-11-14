@@ -1,30 +1,44 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../core/auth/permissions.dart';
 import '../../core/auth/session.dart';
+import '../../core/brand/logo.dart';
 import '../../core/format.dart';
 import '../../core/icons/app_icon.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
+import '../../core/widgets/form.dart';
+import '../../core/widgets/hscroll.dart';
 import '../../core/widgets/page.dart';
+import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/widgets.dart';
-import '../../core/brand/logo.dart';
+import '../alerts/alerts.dart';
 import '../leads/lead.dart';
-import '../visits/visit.dart';
+import '../leads/lead_status.dart';
+import '../leads/leads_board.dart';
+import '../onboarding/onboarding.dart';
+import '../onboarding/onboarding_board.dart';
 import 'dashboard.dart';
 import 'stat_card.dart';
 
+/// Opens the list behind an attention row or a tile.
+void openTarget(BuildContext context, WidgetRef ref, HomeTarget target, {String? label}) {
+  switch (target) {
+    case LeadsTarget(:final queue):
+      ref.read(leadQueueProvider.notifier).set((queue: queue, label: label ?? queue.replaceAll('_', ' ')));
+      context.go('/leads');
+    case OnboardingsTarget(:final tab):
+      ref
+          .read(onboardingTabProvider.notifier)
+          .set(OnboardingTab.values.where((t) => t.query == tab).firstOrNull ?? OnboardingTab.needsAction);
+      context.go('/onboarding');
+  }
+}
+
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
-
-  String _greeting() {
-    final h = DateTime.now().hour;
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,131 +46,321 @@ class HomeScreen extends ConsumerWidget {
     if (user == null) return const SizedBox.shrink();
     final canSeeCounts = user.can(Perm.dashboardView);
     final dashboard = canSeeCounts ? ref.watch(dashboardProvider) : null;
-
+    final unread = ref.watch(unreadAlertsProvider);
     final territories = user.territories.map((t) => t.name).join(', ');
+    final d = dashboard?.value;
+    final loading = dashboard != null && d == null && !dashboard.hasError;
 
     return PageBody(
       onRefresh: () async {
-        ref.invalidate(todaysVisitsProvider);
+        ref.invalidate(alertsProvider);
         if (canSeeCounts) {
           ref.invalidate(dashboardProvider);
           await ref.read(dashboardProvider.future);
         }
       },
+      header: Row(
+        children: [
+          const Expanded(
+            child: Align(alignment: Alignment.centerLeft, child: AppLogo(height: 22)),
+          ),
+          _Bell(unread: unread),
+        ],
+      ),
       children: [
-        Row(
-          children: [
-            const Expanded(
-              child: Align(alignment: Alignment.centerLeft, child: AppLogo(height: 30)),
-            ),
-            IconTile(
-              AppIcons.bell,
-              semanticLabel: 'Alerts',
-              alignment: Alignment.centerRight,
-              onTap: () => context.push('/alerts'),
-            ),
-          ],
-        ),
-        const SizedBox(height: Space.xs),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${_greeting()}, ${user.firstName}', style: context.text.title),
+            Text('Hi ${user.firstName}', style: context.text.title),
             Text(
               territories.isEmpty ? user.designation : '${user.designation} · $territories',
               style: context.text.secondary,
             ),
           ],
         ),
-        if (dashboard != null) ...[const SizedBox(height: Space.xxs), _Counters(dashboard: dashboard)],
-        if (user.can(Perm.visitsManage)) ...[const SectionLabel("Today's visits"), const _TodaysVisits()],
+        if (dashboard?.hasError ?? false)
+          AppCard(child: Text("Couldn't load your numbers. Pull down to retry.", style: context.text.secondary)),
+        if (loading)
+          const SkeletonScope(
+            label: 'Loading your numbers',
+            child: SkeletonRows(count: 4, lead: BoneLead.none),
+          ),
+        if (d != null) ...[
+          const SectionLabel('Overview'),
+          _Headline(d: d),
+          if (d.attention.isNotEmpty) ...[const SectionLabel('Needs attention'), _AttentionList(items: d.attention)],
+          const SectionLabel('Today'),
+          _TodayRow(today: d.today),
+          if (d.stages.isNotEmpty) ...[const SectionLabel('Lead to billing'), _StageStrip(stages: d.stages)],
+          if (d.recent.isNotEmpty) ...[
+            const SectionLabel('Recent leads'),
+            _RecentLeads(items: d.recent.take(8).toList()),
+          ],
+        ],
       ],
     );
   }
 }
 
-class _Counters extends ConsumerWidget {
-  const _Counters({required this.dashboard});
+class _Bell extends StatelessWidget {
+  const _Bell({required this.unread});
 
-  final AsyncValue<Dashboard> dashboard;
+  final int unread;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final d = dashboard.value;
-    String n(String status) => d == null ? '–' : '${d.count(status)}';
-    final items = [
-      ('New assignments', n('ASSIGNED'), AppIcons.leads, StatTone.clay, LeadFilter.assigned),
-      ('Visits scheduled', n('VISIT_SCHEDULED'), AppIcons.visit, StatTone.olive, LeadFilter.visitScheduled),
-      ('Follow-ups', n('FOLLOW_UP'), AppIcons.followUp, StatTone.mustard, LeadFilter.followUp),
-      ('Qualified', n('QUALIFIED'), AppIcons.check, StatTone.teal, LeadFilter.qualified),
-    ];
-    Widget card(int i) => StatCard(
-      label: items[i].$1,
-      value: items[i].$2,
-      icon: items[i].$3,
-      tone: items[i].$4,
-      onTap: () {
-        // Opens the Leads tab on the list behind this number.
-        ref.read(leadFilterProvider.notifier).set(items[i].$5);
-        context.go('/leads');
-      },
-    );
-    // Each row takes the height of its tallest card; the cards stretch to
-    // match, and their text stays on the bottom edge.
-    Widget row(int a, int b) => IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(child: card(a)),
-          const SizedBox(width: Space.sm),
-          Expanded(child: card(b)),
-        ],
-      ),
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Stack(
+      clipBehavior: Clip.none,
       children: [
-        row(0, 1),
-        const SizedBox(height: Space.sm),
-        row(2, 3),
-        if (dashboard.hasError)
-          Padding(
-            padding: const EdgeInsets.only(top: Space.sm),
-            child: Text("Couldn't load counts. Pull down to retry.", style: context.text.label),
+        IconTile(
+          AppIcons.bell,
+          semanticLabel: unread > 0 ? 'Alerts, $unread unread' : 'Alerts',
+          alignment: Alignment.centerRight,
+          onTap: () => context.push('/alerts'),
+        ),
+        if (unread > 0)
+          Positioned(
+            right: -4,
+            top: 2,
+            child: IgnorePointer(
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 18),
+                height: 18,
+                padding: const EdgeInsets.symmetric(horizontal: 5),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: c.primary,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: c.page, width: 2),
+                ),
+                child: Text(
+                  unread > 99 ? '99+' : '$unread',
+                  style: context.text.caption.copyWith(color: c.onPrimary, fontWeight: FontWeight.w600, height: 1),
+                ),
+              ),
+            ),
           ),
       ],
     );
   }
 }
 
-class _TodaysVisits extends ConsumerWidget {
-  const _TodaysVisits();
+class _AttentionList extends ConsumerWidget {
+  const _AttentionList({required this.items});
+
+  final List<Attention> items;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final visits = ref.watch(todaysVisitsProvider);
-    return visits.when(
-      loading: () => AppCard(child: Text('Loading today\'s visits…', style: context.text.secondary)),
-      error: (_, _) =>
-          AppCard(child: Text("Couldn't load today's visits. Pull down to retry.", style: context.text.secondary)),
-      data: (list) => list.isEmpty
-          ? AppCard(child: Text('No visits scheduled for today.', style: context.text.secondary))
-          : GroupedList(
-              children: [
-                for (final v in list)
-                  ListRow(
-                    title: v.leadName,
-                    subtitle: [v.leadNo, v.address].whereType<String>().join(' · '),
-                    leading: SizedBox(
-                      width: 64,
-                      child: Text(
-                        v.scheduledAt == null ? '–' : formatTime(v.scheduledAt!),
-                        style: context.text.bodyStrong,
-                      ),
-                    ),
-                  ),
-              ],
+    final c = context.colors;
+    return GroupedList(
+      children: [
+        for (final a in items)
+          ListRow(
+            title: a.label,
+            dim: a.count == 0,
+            leading: IconTile(
+              a.count == 0 ? AppIcons.check : AppIcons.alert,
+              color: a.count == 0 ? c.textTertiary : c.danger,
+              background: a.count == 0 ? context.fieldFill : c.tintOf(c.danger),
+              size: 32,
+              iconSize: 16,
             ),
+            trailing: Text(
+              '${a.count}',
+              style: context.text.bodyStrong.copyWith(color: a.count == 0 ? c.textTertiary : c.danger),
+            ),
+            onTap: a.target == null ? null : () => openTarget(context, ref, a.target!, label: a.label),
+          ),
+      ],
+    );
+  }
+}
+
+class _TodayRow extends StatelessWidget {
+  const _TodayRow({required this.today});
+
+  final TodayCounts today;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      ('New leads', today.newLeads),
+      ('Calls logged', today.calls),
+      ('Visits checked in', today.visits),
+      ('Qualified', today.qualified),
+    ];
+    // Tiles size to their one-line label; the row scrolls sideways when it
+    // doesn't fit, instead of wrapping labels.
+    return HScroll(
+      children: [
+        for (var i = 0; i < items.length; i++)
+          ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 96),
+            child: AppCard(
+              padding: const EdgeInsets.fromLTRB(Space.lg, Space.md, Space.lg, Space.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('${items[i].$2}', style: context.text.number.copyWith(fontSize: 22)),
+                  const SizedBox(height: Space.xs),
+                  Text(
+                    items[i].$1,
+                    maxLines: 1,
+                    softWrap: false,
+                    style: context.text.caption.copyWith(color: context.colors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _Headline extends ConsumerWidget {
+  const _Headline({required this.d});
+
+  final Dashboard d;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    void leads(LeadFilter f) {
+      ref.read(leadQueueProvider.notifier).set(null);
+      ref.read(leadFilterProvider.notifier).set(f);
+      context.go('/leads');
+    }
+
+    final cards = [
+      StatCard(
+        label: 'Total leads',
+        value: '${d.total}',
+        icon: AppIcons.leads,
+        tone: StatTone.clay,
+        onTap: () => leads(LeadFilter.all),
+      ),
+      StatCard(
+        label: 'Qualified',
+        value: '${d.count('QUALIFIED')}',
+        caption: '${d.conversionPct}% · ${d.qualifiedThisMonth} this month',
+        icon: AppIcons.check,
+        tone: StatTone.teal,
+        onTap: () => leads(LeadFilter.qualified),
+      ),
+      StatCard(
+        label: 'Onboarding: your action',
+        value: '${d.onboardingNeedsAction}',
+        caption: '${d.onboardingWaiting} with review teams',
+        icon: AppIcons.store,
+        tone: StatTone.mustard,
+        onTap: () => openTarget(context, ref, const OnboardingsTarget('needs_action')),
+      ),
+      StatCard(
+        label: 'Stores live',
+        value: '${d.onboardingLive}',
+        icon: AppIcons.shield,
+        tone: StatTone.olive,
+        onTap: () => openTarget(context, ref, const OnboardingsTarget('live')),
+      ),
+    ];
+    Widget row(int a, int b) => IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: cards[a]),
+          const SizedBox(width: Space.sm),
+          Expanded(child: cards[b]),
+        ],
+      ),
+    );
+    return Column(
+      children: [
+        row(0, 1),
+        const SizedBox(height: Space.sm),
+        row(2, 3),
+      ],
+    );
+  }
+}
+
+class _StageStrip extends StatelessWidget {
+  const _StageStrip({required this.stages});
+
+  final List<Stage> stages;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return HScroll(
+      children: [
+        for (final s in stages)
+          Builder(
+            builder: (context) {
+              final known = s.count != null;
+              return GestureDetector(
+                onTap: !known
+                    ? null
+                    : () =>
+                          pushForm<void>(context, s.isLead ? const LeadsBoardScreen() : const OnboardingBoardScreen()),
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 96),
+                  padding: const EdgeInsets.symmetric(horizontal: Space.md, vertical: Space.sm),
+                  decoration: BoxDecoration(color: c.card, borderRadius: BorderRadius.circular(Radii.card)),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '${s.no.toString().padLeft(2, '0')}  ',
+                              style: TextStyle(color: s.isLead ? c.accent : c.info, fontWeight: FontWeight.w600),
+                            ),
+                            TextSpan(text: s.name),
+                          ],
+                        ),
+                        maxLines: 1,
+                        softWrap: false,
+                        style: context.text.caption.copyWith(color: c.textPrimary),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(known ? '${s.count}' : '—', style: context.text.number.copyWith(fontSize: 18)),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+}
+
+class _RecentLeads extends StatelessWidget {
+  const _RecentLeads({required this.items});
+
+  final List<RecentLead> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return GroupedList(
+      children: [
+        for (final l in items)
+          ListRow(
+            title: l.name,
+            subtitle: [
+              l.leadNo,
+              if (l.sourceLabel != null) l.sourceLabel!,
+              if (l.createdAt != null) formatShortDay(l.createdAt!),
+            ].join(' · '),
+            leading: Initials(l.name),
+            trailing: l.statusLabel == null ? null : StatusBadge(l.statusLabel!, tone: toneForStatus(l.status ?? '')),
+            onTap: () => context.go('/leads/${l.id}'),
+          ),
+      ],
     );
   }
 }

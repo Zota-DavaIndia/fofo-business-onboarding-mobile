@@ -41,6 +41,7 @@ class Lead {
     this.latitude,
     this.longitude,
     this.assignedTo,
+    this.storeLocation,
   });
 
   final int id;
@@ -78,6 +79,9 @@ class Lead {
   final double? latitude;
   final double? longitude;
   final String? assignedTo;
+
+  /// Where the store is proposed to open, from the site visit.
+  final StoreLocation? storeLocation;
 
   bool allows(String action) => allowedActions.contains(action);
 
@@ -124,6 +128,30 @@ class Lead {
     latitude: (j['latitude'] as num?)?.toDouble(),
     longitude: (j['longitude'] as num?)?.toDouble(),
     assignedTo: j['rcm'] is Map ? str((j['rcm'] as Map)['name']) : null,
+    storeLocation: j['store_location'] is Map<String, dynamic>
+        ? StoreLocation.fromJson(j['store_location'] as Map<String, dynamic>)
+        : null,
+  );
+}
+
+class StoreLocation {
+  const StoreLocation({this.address, this.landmark, this.pincode, this.latitude, this.longitude});
+
+  final String? address;
+  final String? landmark;
+  final String? pincode;
+  final double? latitude;
+  final double? longitude;
+
+  /// "Shop 4, Hiran Magri · near City Hospital · 313002"
+  String get summary => [address, if (landmark != null) 'near $landmark', pincode].whereType<String>().join(' · ');
+
+  factory StoreLocation.fromJson(Map<String, dynamic> j) => StoreLocation(
+    address: str(j['address']),
+    landmark: str(j['landmark']),
+    pincode: str(j['pincode']),
+    latitude: (j['latitude'] as num?)?.toDouble(),
+    longitude: (j['longitude'] as num?)?.toDouble(),
   );
 }
 
@@ -230,15 +258,36 @@ class LeadSearchNotifier extends Notifier<String> {
 
 final leadSearchProvider = NotifierProvider<LeadSearchNotifier, String>(LeadSearchNotifier.new);
 
+/// A server queue the Leads list is showing instead of a status filter,
+/// opened from a Home "Needs attention" row.
+typedef LeadQueue = ({String queue, String label});
+
+class LeadQueueNotifier extends Notifier<LeadQueue?> {
+  @override
+  LeadQueue? build() => null;
+
+  void set(LeadQueue? queue) => state = queue;
+}
+
+final leadQueueProvider = NotifierProvider<LeadQueueNotifier, LeadQueue?>(LeadQueueNotifier.new);
+
 /// The user's leads for the current filter and search. The server only
 /// returns leads in the user's scope.
 final leadsProvider = FutureProvider.autoDispose<List<Lead>>((ref) async {
   ref.watch(liveSignalProvider(LiveTopic.leads));
   final filter = ref.watch(leadFilterProvider);
+  final queue = ref.watch(leadQueueProvider);
   final search = ref.watch(leadSearchProvider);
   final res = await ref
       .watch(apiClientProvider)
-      .get<List<dynamic>>('/leads', query: {...filter.query, if (search.isNotEmpty) 'q': search, 'per_page': 100});
+      .get<List<dynamic>>(
+        '/leads',
+        query: {
+          ...queue == null ? filter.query : {'queue': queue.queue},
+          if (search.isNotEmpty) 'q': search,
+          'per_page': 100,
+        },
+      );
   return [for (final l in res.data) Lead.fromJson(l as Map<String, dynamic>)];
 });
 

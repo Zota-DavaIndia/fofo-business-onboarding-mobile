@@ -62,10 +62,16 @@ class Track {
     this.areaManager,
     this.support,
     this.signInAgain = false,
+    this.mobile,
+    this.leadReference,
   });
 
   final String accountType;
   final String name;
+  final String? mobile;
+
+  /// The enquiry's lead number, kept after approval for reference.
+  final String? leadReference;
 
   /// Lead number before approval, partner number after.
   final String reference;
@@ -87,6 +93,8 @@ class Track {
     accountType: '${j['account_type'] ?? 'enquirer'}',
     name: '${j['name'] ?? ''}',
     reference: _str(j['partner_no']) ?? _str(j['reference']) ?? '',
+    mobile: _str(j['mobile']),
+    leadReference: _str(j['reference']),
     headline: _str(j['headline']),
     storeName: _str(j['store_name']),
     storeCode: _str(j['store_code']),

@@ -12,6 +12,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/form.dart';
 import '../../core/widgets/page.dart';
+import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/widgets.dart';
 import '../visits/visit.dart';
 import '../visits/visit_forms.dart';
@@ -29,12 +30,7 @@ class LeadDetailScreen extends ConsumerWidget {
     final lead = ref.watch(leadProvider(id));
     final back = PageHeader('Lead', onBack: () => context.canPop() ? context.pop() : context.go('/leads'));
     return lead.when(
-      loading: () => PageBody(
-        children: [
-          back,
-          Text('Loading…', style: context.text.secondary),
-        ],
-      ),
+      loading: () => PageBody(children: [back, const _LeadSkeleton()]),
       error: (_, _) => PageBody(
         children: [
           back,
@@ -78,6 +74,7 @@ class LeadDetailScreen extends ConsumerWidget {
       if (l.enquiryAt != null) ('Enquired', formatDate(l.enquiryAt!)),
       if (l.pincode != null || l.city != null) ('Location', [l.pincode, l.city].whereType<String>().join(' · ')),
       if (l.address != null) ('Address', l.address!),
+      if (l.storeLocation?.summary case final store? when store.isNotEmpty) ('Proposed store', store),
       if (l.shopOwnership != null || l.shopAreaSqft != null)
         (
           'Shop',
@@ -150,7 +147,10 @@ class LeadDetailScreen extends ConsumerWidget {
         AppCard(child: Text(l.notes!, style: context.text.secondary)),
       ],
       if (l.onboarding case final o?) ...[
-        const SectionLabel('Onboarding'),
+        SectionLabel(
+          'Onboarding',
+          action: TextLink(label: 'Open', onTap: () => context.go('/onboarding/${o.id}')),
+        ),
         GroupedList(
           children: [
             if (o.number != null) _InfoRow(label: 'Number', value: o.number!),
@@ -162,6 +162,49 @@ class LeadDetailScreen extends ConsumerWidget {
       const SectionLabel('Timeline'),
       _Timeline(id: id),
     ];
+  }
+}
+
+/// Placeholder in the shape of the lead page.
+class _LeadSkeleton extends StatelessWidget {
+  const _LeadSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SkeletonScope(
+      label: 'Loading lead',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Row(
+            children: [
+              Bone.circle(52),
+              SizedBox(width: Space.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Bone(width: 160, height: 16),
+                    SizedBox(height: Space.sm),
+                    Bone(width: 120, height: 10),
+                  ],
+                ),
+              ),
+              Bone(width: 64, height: 18),
+            ],
+          ),
+          const SizedBox(height: Space.md),
+          const SkeletonLabel(width: 56),
+          const SkeletonRows(count: 1, lead: BoneLead.tile, badge: false),
+          const SizedBox(height: Space.md),
+          const SkeletonLabel(width: 120),
+          const SkeletonCard(lines: 2),
+          const SizedBox(height: Space.md),
+          const SkeletonLabel(width: 56),
+          const SkeletonRows(count: 4, lead: BoneLead.none, badge: false),
+        ],
+      ),
+    );
   }
 }
 
@@ -387,7 +430,10 @@ class _Timeline extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final items = ref.watch(leadActivitiesProvider(id));
     return items.when(
-      loading: () => AppCard(child: Text('Loading…', style: context.text.secondary)),
+      loading: () => const SkeletonScope(
+        label: 'Loading timeline',
+        child: SkeletonRows(count: 3, lead: BoneLead.none, badge: false),
+      ),
       error: (_, _) => AppCard(child: Text("Couldn't load the timeline.", style: context.text.secondary)),
       data: (list) => list.isEmpty
           ? AppCard(child: Text('Nothing has happened on this lead yet.', style: context.text.secondary))

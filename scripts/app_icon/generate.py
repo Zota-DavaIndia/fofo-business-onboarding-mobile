@@ -1,8 +1,8 @@
-"""Builds the launcher icon and the "fa" mark used in the in-app logo.
+"""Builds the launcher icon and the "ff" mark used in the in-app logo.
 
 The icon is the davaindia lettering (taken from the official logo in
-assets/brand, recoloured white) with "fa" in Montserrat ExtraBold Italic
-under its right end, on the app's clay colour. "fa" is shaped with HarfBuzz
+assets/brand, recoloured white) with "ff" in Montserrat ExtraBold Italic
+under its right end, on the app's clay colour. "ff" is shaped with HarfBuzz
 and converted to vector paths, so neither the icon nor the app needs the
 font at runtime. Montserrat is under the SIL Open Font License (see
 scripts/app_icon/fonts/OFL.txt).
@@ -42,24 +42,27 @@ WHITE = "#FFFFFF"
 PAGE = "#F6F3EF"
 PAGE_DARK = "#14110E"
 
-# Launch screen: the "fa" circle, 104 pt/dp across, centred on the screen.
+# Launch screen: the "ff" circle, 104 pt/dp across, centred on the screen.
 SPLASH_MARK = 104
 
-# Layout as shares of the visible icon: lettering width, "fa" height, gap.
+# Layout as shares of the visible icon: lettering width, "ff" height, gap.
 WORD_SHARE = 0.64
-FA_SHARE = 0.38
+MARK_SHARE = 0.38
 GAP_SHARE = 0.04
+
+# The letters drawn in the mark. Ligatures are off, so they stay apart.
+TEXT = "ff"
 
 
 class Mark:
-    """"fa" shaped with HarfBuzz, in font units (y up)."""
+    """"ff" shaped with HarfBuzz, in font units (y up)."""
 
     def __init__(self):
         font = TTFont(FONT)
         self.glyphs = font.getGlyphSet()
         order = font.getGlyphOrder()
         buf = hb.Buffer()
-        buf.add_str("fa")
+        buf.add_str(TEXT)
         buf.guess_segment_properties()
         hb.shape(hb.Font(hb.Face(hb.Blob.from_file_path(str(FONT)))), buf, {"kern": True, "liga": False})
         self.run, x = [], 0
@@ -80,7 +83,7 @@ class Mark:
         return (x1 - x0) / (y1 - y0)
 
     def draw(self, pen, height, left, top):
-        """Draws "fa" `height` tall with its top-left corner at (left, top),
+        """Draws "ff" `height` tall with its top-left corner at (left, top),
         y down."""
         x0, y0, x1, y1 = self.bounds
         k = height / (y1 - y0)
@@ -100,12 +103,12 @@ def word_image():
     return "data:image/png;base64," + base64.b64encode(white.read_bytes()).decode()
 
 
-def icon_art(word, visible, offset, fa_color):
-    """davaindia on top, "fa" below it, right edges aligned, centred in a
+def icon_art(word, visible, offset, mark_color):
+    """davaindia on top, "ff" below it, right edges aligned, centred in a
     visible x visible area that starts at (offset, offset)."""
     ww = visible * WORD_SHARE
     wh = ww / WORD_ASPECT
-    fh = visible * FA_SHARE
+    fh = visible * MARK_SHARE
     gap = visible * GAP_SHARE
     top = offset + (visible - (wh + gap + fh)) / 2
     left = offset + (visible - ww) / 2
@@ -113,14 +116,14 @@ def icon_art(word, visible, offset, fa_color):
     MARK.draw(pen, fh, left + ww - fh * MARK.aspect(), top + wh + gap)
     return (
         f'<image x="{left:.2f}" y="{top:.2f}" width="{ww:.2f}" height="{wh:.2f}" href="{word}"/>'
-        f'<path d="{pen.getCommands()}" fill="{fa_color}"/>'
+        f'<path d="{pen.getCommands()}" fill="{mark_color}"/>'
     )
 
 
-def svg_icon(word, size, bg, fa_color, radius=0):
+def svg_icon(word, size, bg, mark_color, radius=0):
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}" width="{size}" height="{size}">'
-        f'<rect width="{size}" height="{size}" rx="{radius}" fill="{bg}"/>{icon_art(word, size, 0, fa_color)}</svg>'
+        f'<rect width="{size}" height="{size}" rx="{radius}" fill="{bg}"/>{icon_art(word, size, 0, mark_color)}</svg>'
     )
 
 
@@ -162,7 +165,7 @@ class DartPen(BasePen):
 
 
 def dart_mark():
-    """Writes "fa" as Dart code, 100 units tall, top-left at 0,0."""
+    """Writes "ff" as Dart code, 100 units tall, top-left at 0,0."""
     pen = DartPen(MARK.glyphs)
     MARK.draw(pen, 100, 0, 0)
     lines = [
@@ -170,9 +173,9 @@ def dart_mark():
         "",
         "import 'dart:ui';",
         "",
-        f"const faSize = Size({100 * MARK.aspect():.2f}, 100);",
+        f"const brandMarkSize = Size({100 * MARK.aspect():.2f}, 100);",
         "",
-        "void faMark(Path p) {",
+        "void brandMark(Path p) {",
         *[f"  {c}" for c in pen.calls],
         "}",
     ]
@@ -181,7 +184,7 @@ def dart_mark():
 
 
 def svg_mark(canvas, diameter, clay):
-    """The "fa" circle centred on a transparent canvas."""
+    """The "ff" circle centred on a transparent canvas."""
     pen = SVGPathPen(MARK.glyphs)
     MARK.draw_centered(pen, diameter * 0.48, canvas)
     r = diameter / 2
@@ -193,7 +196,7 @@ def svg_mark(canvas, diameter, clay):
 
 
 def splash():
-    """Native launch screens: page colour with the "fa" circle in the centre,
+    """Native launch screens: page colour with the "ff" circle in the centre,
     matching the first frame of the Flutter splash."""
     (OUT / "mark.svg").write_text(svg_mark(SPLASH_MARK, SPLASH_MARK, CLAY))
     (OUT / "mark-dark.svg").write_text(svg_mark(SPLASH_MARK, SPLASH_MARK, CLAY_DARK))
@@ -267,8 +270,31 @@ def png(svg_file, out, size, opaque=None):
         run("magick", str(out), "-background", opaque, "-alpha", "remove", "-alpha", "off", str(out))
 
 
+def wordmark():
+    """The in-app logo's parts: the official icon, and just the "davaindia"
+    line of the official lettering (no (c), no "GENERIC PHARMACY"), at each
+    scale and in both themes. The app sets "FIELD FORCE" under it as text."""
+    crop = f"{614 / 649 * 100:.3f}%x{104 / 160 * 100:.3f}%+0+0"
+    brand = ROOT / "assets/brand"
+    for scale in ("", "2.0x/", "3.0x/"):
+        for theme in ("", "-dark"):
+            src = brand / f"{scale}lettering{theme}.png"
+            run("magick", str(src), "-crop", crop, "+repage", "-trim", "+repage", str(brand / f"{scale}wordmark{theme}.png"))
+    # The official icon (mortar and pestle "i"), left of the lettering in the
+    # full logo: cut once from the sharpest copy, then scaled down.
+    for theme in ("", "-dark"):
+        big = brand / f"3.0x/icon{theme}.png"
+        run(
+            "magick", str(brand / f"3.0x/logo{theme}.png"), "-crop", f"{150 / 805 * 100:.3f}%x100%+0+0",
+            "+repage", "-trim", "+repage", str(big),
+        )
+        run("magick", str(big), "-resize", "66.667%", str(brand / f"2.0x/icon{theme}.png"))
+        run("magick", str(big), "-resize", "33.333%", str(brand / f"icon{theme}.png"))
+
+
 def main():
     OUT.mkdir(exist_ok=True)
+    wordmark()
     word = word_image()
 
     # iOS: full-bleed square; the system applies the rounded mask.

@@ -191,7 +191,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
       children: [
         const SizedBox(height: Space.xxl),
-        const AppLogo(height: 40),
+        const AppLogo(height: 28),
         const SizedBox(height: Space.xxl),
         ...switch (_step) {
           _Step.identify => _identify(context),

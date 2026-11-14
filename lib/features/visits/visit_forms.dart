@@ -209,6 +209,15 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> with FormSubmit {
   final _hospitals = TextEditingController();
   final _pharmacies = TextEditingController();
   final _notes = TextEditingController();
+  late final _storeAddress = TextEditingController(text: widget.lead.storeLocation?.address ?? '');
+  late final _storeLandmark = TextEditingController(text: widget.lead.storeLocation?.landmark ?? '');
+  late final _storePincode = TextEditingController(
+    text: widget.lead.storeLocation?.pincode ?? widget.lead.pincode ?? '',
+  );
+
+  /// The proposed store is where the phone is now. Off when the store will
+  /// be somewhere else; its pin then stays as it was.
+  bool _storeHere = true;
   final _clientId = newClientId();
   String? _localError;
 
@@ -222,7 +231,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> with FormSubmit {
 
   @override
   void dispose() {
-    for (final c in [_area, _frontage, _hospitals, _pharmacies, _notes]) {
+    for (final c in [_area, _frontage, _hospitals, _pharmacies, _notes, _storeAddress, _storeLandmark, _storePincode]) {
       c.dispose();
     }
     super.dispose();
@@ -311,6 +320,10 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> with FormSubmit {
           'competing_pharmacies': ?t(_pharmacies),
           'investment_confirmed': ?_investment,
           'notes': ?t(_notes),
+          'store_address': ?t(_storeAddress),
+          'store_landmark': ?t(_storeLandmark),
+          'store_pincode': ?t(_storePincode),
+          if (_storeHere) ...{'store_latitude': p.latitude, 'store_longitude': p.longitude},
         },
       );
     }, done: 'Checked in');
@@ -374,6 +387,67 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> with FormSubmit {
           ),
         if (fieldError('photo_upload_id') case final e?)
           Text(e, style: context.text.label.copyWith(color: context.colors.danger)),
+        const SectionLabel('Proposed store'),
+        AppField(
+          controller: _storeAddress,
+          label: 'Store address',
+          hint: 'Shop no., street, area',
+          minLines: 2,
+          maxLines: 4,
+          textCapitalization: TextCapitalization.sentences,
+          errorText: fieldError('store_address'),
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: AppField(
+                controller: _storeLandmark,
+                label: 'Landmark',
+                hint: 'Near…',
+                textCapitalization: TextCapitalization.sentences,
+                errorText: fieldError('store_landmark'),
+              ),
+            ),
+            const SizedBox(width: Space.md),
+            Expanded(
+              flex: 2,
+              child: AppField(
+                controller: _storePincode,
+                label: 'Pincode',
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                errorText: fieldError('store_pincode'),
+              ),
+            ),
+          ],
+        ),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => setState(() => _storeHere = !_storeHere),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('The store is where I am now', style: context.text.body),
+                    Text(
+                      _storeHere ? 'Pins the store at your location.' : 'The store pin is left as it is.',
+                      style: context.text.label,
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: _storeHere,
+                onChanged: (v) => setState(() => _storeHere = v),
+                activeTrackColor: context.colors.accent,
+              ),
+            ],
+          ),
+        ),
         const SectionLabel('Site'),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,

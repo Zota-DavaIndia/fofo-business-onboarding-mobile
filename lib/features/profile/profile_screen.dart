@@ -7,8 +7,10 @@ import '../../core/config/env.dart';
 import '../../core/icons/app_icon.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
+import '../../core/widgets/form.dart';
 import '../../core/widgets/page.dart';
 import '../../core/widgets/widgets.dart';
+import 'change_password_screen.dart';
 
 final _deviceIdProvider = FutureProvider.autoDispose<String>((ref) => ref.watch(secureStoreProvider).deviceId());
 
@@ -22,8 +24,8 @@ class ProfileScreen extends ConsumerWidget {
     final deviceId = ref.watch(_deviceIdProvider).value ?? '…';
 
     return PageBody(
+      header: Text('Profile', style: context.text.title),
       children: [
-        Text('Profile', style: context.text.title),
         Row(
           children: [
             Initials(user.name, size: 52),
@@ -46,6 +48,17 @@ class ProfileScreen extends ConsumerWidget {
             if (user.mobile != null) ListRow(title: user.mobile!, subtitle: 'Mobile'),
             if (user.territories.isNotEmpty)
               ListRow(title: user.territories.map((t) => t.name).join(', '), subtitle: 'Territories'),
+          ],
+        ),
+        const SectionLabel('Security'),
+        GroupedList(
+          children: [
+            ListRow(
+              title: 'Change password',
+              leading: IconTile(AppIcons.lock, color: context.colors.accent, background: context.colors.accentTint),
+              trailing: AppIcon(AppIcons.right, size: Sizes.iconSmall, color: context.colors.textTertiary),
+              onTap: () => pushForm<bool>(context, const ChangePasswordScreen()),
+            ),
           ],
         ),
         const SectionLabel('This phone'),

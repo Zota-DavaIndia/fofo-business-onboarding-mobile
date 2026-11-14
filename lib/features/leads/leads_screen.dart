@@ -10,10 +10,13 @@ import '../../core/icons/app_icon.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/form.dart';
+import '../../core/widgets/hscroll.dart';
 import '../../core/widgets/page.dart';
+import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/widgets.dart';
 import 'lead.dart';
 import 'lead_form_screen.dart';
+import 'leads_board.dart';
 import 'lead_status.dart';
 
 class LeadsScreen extends ConsumerStatefulWidget {
@@ -42,28 +45,37 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
   @override
   Widget build(BuildContext context) {
     final filter = ref.watch(leadFilterProvider);
+    final queue = ref.watch(leadQueueProvider);
     final leads = ref.watch(leadsProvider);
     final canCreate = ref.watch(sessionProvider).value?.can(Perm.leadsCreate) ?? false;
     return PageBody(
       onRefresh: () => ref.refresh(leadsProvider.future),
-      children: [
-        Row(
-          children: [
-            Expanded(child: Text('Leads', style: context.text.title)),
-            if (canCreate)
-              IconTile(
-                AppIcons.plus,
-                semanticLabel: 'Add a lead',
-                color: context.colors.accent,
-                background: context.colors.accentTint,
-                alignment: Alignment.centerRight,
-                onTap: () async {
-                  final id = await pushForm<int>(context, const LeadFormScreen());
-                  if (id != null && context.mounted) context.go('/leads/$id');
-                },
-              ),
+      header: Row(
+        children: [
+          Expanded(child: Text('Leads', style: context.text.title)),
+          IconTile(
+            AppIcons.board,
+            semanticLabel: 'Leads board',
+            alignment: Alignment.centerRight,
+            onTap: () => pushForm<void>(context, const LeadsBoardScreen()),
+          ),
+          if (canCreate) ...[
+            const SizedBox(width: Space.xs),
+            IconTile(
+              AppIcons.plus,
+              semanticLabel: 'Add a lead',
+              color: context.colors.accent,
+              background: context.colors.accentTint,
+              alignment: Alignment.centerRight,
+              onTap: () async {
+                final id = await pushForm<int>(context, const LeadFormScreen());
+                if (id != null && context.mounted) context.go('/leads/$id');
+              },
+            ),
           ],
-        ),
+        ],
+      ),
+      children: [
         AppField(
           controller: _search,
           hint: 'Name, mobile or lead no.',
@@ -71,30 +83,33 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
           textInputAction: TextInputAction.search,
           onChanged: _onSearch,
         ),
-        SizedBox(
-          height: 36,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: LeadFilter.values.length,
-            separatorBuilder: (_, _) => const SizedBox(width: Space.xs),
-            itemBuilder: (context, i) {
-              final f = LeadFilter.values[i];
+        HScroll(
+          spacing: Space.xs,
+          children: List.generate(LeadFilter.values.length + (queue == null ? 0 : 1), (i) {
+            // A queue opened from Home comes first, selected; tapping it
+            // or any filter goes back to the normal filters.
+            if (queue != null && i == 0) {
               return AppChip(
                 height: 36,
-                label: f.label,
-                selected: f == filter,
-                onTap: () => ref.read(leadFilterProvider.notifier).set(f),
+                label: '${queue.label}  ✕',
+                selected: true,
+                onTap: () => ref.read(leadQueueProvider.notifier).set(null),
               );
-            },
-          ),
+            }
+            final f = LeadFilter.values[i - (queue == null ? 0 : 1)];
+            return AppChip(
+              height: 36,
+              label: f.label,
+              selected: queue == null && f == filter,
+              onTap: () {
+                ref.read(leadQueueProvider.notifier).set(null);
+                ref.read(leadFilterProvider.notifier).set(f);
+              },
+            );
+          }),
         ),
         ...leads.when(
-          loading: () => [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: Space.xxl),
-              child: Text('Loading leads…', style: context.text.secondary),
-            ),
-          ],
+          loading: () => [const SkeletonScope(label: 'Loading leads', child: SkeletonRows(count: 6))],
           error: (_, _) => [
             const SizedBox(height: Space.xl),
             MessageBlock(

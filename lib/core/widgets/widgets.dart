@@ -52,13 +52,24 @@ class GroupedList extends StatelessWidget {
 /// A row inside a [GroupedList]: optional leading widget, title, subtitle
 /// and trailing widget.
 class ListRow extends StatelessWidget {
-  const ListRow({super.key, required this.title, this.subtitle, this.leading, this.trailing, this.onTap});
+  const ListRow({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.leading,
+    this.trailing,
+    this.onTap,
+    this.dim = false,
+  });
 
   final String title;
   final String? subtitle;
   final Widget? leading;
   final Widget? trailing;
   final VoidCallback? onTap;
+
+  /// Greys the title, for rows that can't be used yet.
+  final bool dim;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +82,12 @@ class ListRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: context.text.body, maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(
+                  title,
+                  style: dim ? context.text.body.copyWith(color: context.colors.textTertiary) : context.text.body,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 if (subtitle != null) Text(subtitle!, style: context.text.label),
               ],
             ),
@@ -370,7 +386,12 @@ class Initials extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    // Words that start with a letter or digit, so "Demo · Shop" gives "DS".
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => RegExp(r'^[\p{L}\p{N}]', unicode: true).hasMatch(p))
+        .toList();
     final letters = parts.take(2).map((p) => p[0].toUpperCase()).join();
     return Container(
       width: size,

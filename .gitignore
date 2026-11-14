@@ -6,6 +6,7 @@ env/*.json
 !env/example.json
 !env/staging.json
 android/key.properties
+ios/Flutter/Secrets.xcconfig
 *.jks
 *.keystore
 

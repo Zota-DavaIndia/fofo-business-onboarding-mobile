@@ -11,3 +11,9 @@ String formatDay(DateTime d) => '${d.day} ${_months[d.month - 1]} ${d.year}';
 
 /// "17 Oct 2026, 3:01 pm" in the phone's time zone.
 String formatDate(DateTime d) => '${formatDay(d)}, ${formatTime(d)}';
+
+/// "17 Oct", or "17 Oct 2025" when it isn't this year.
+String formatShortDay(DateTime d) {
+  final full = formatDay(d);
+  return d.year == DateTime.now().year ? full.substring(0, full.length - 5) : full;
+}

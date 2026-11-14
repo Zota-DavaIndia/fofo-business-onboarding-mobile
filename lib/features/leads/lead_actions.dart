@@ -8,6 +8,8 @@ import '../../core/masters.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/form.dart';
+import '../../core/widgets/partner_code.dart';
+import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/submit.dart';
 import '../../core/widgets/widgets.dart';
 import '../visits/visit_forms.dart';
@@ -37,6 +39,7 @@ Future<void> showLeadActions(BuildContext context, WidgetRef ref, Lead lead) {
     if (lead.allows(LeadAction.changeStatus) && can(Perm.leadsStatus) && lead.nextStatuses.isNotEmpty)
       (AppIcons.close, 'Close lead', ChangeStatusScreen(lead: lead, closing: true), true),
   ];
+  final codes = ref.read(appConfigProvider).value?.fieldIssuesCodes ?? false;
   return showModalBottomSheet<void>(
     context: context,
     useRootNavigator: true,
@@ -46,6 +49,16 @@ Future<void> showLeadActions(BuildContext context, WidgetRef ref, Lead lead) {
     builder: (sheet) => SheetBody(
       title: lead.name,
       children: [
+        if (codes)
+          ListRow(
+            title: 'Give a sign-in code',
+            subtitle: 'For the customer to track their enquiry',
+            leading: IconTile(AppIcons.lock, color: sheet.colors.accent, background: sheet.colors.accentTint),
+            onTap: () {
+              Navigator.of(sheet).pop();
+              showPartnerCode(context, ref, '/leads/${lead.id}/partner-code', name: lead.name);
+            },
+          ),
         if (items.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: Space.lg),
@@ -307,7 +320,7 @@ class _ChangeStatusScreenState extends ConsumerState<ChangeStatusScreen> with Fo
       children: [
         Text('${widget.lead.name} · now ${widget.lead.statusLabel}', style: context.text.label),
         if (statuses.isLoading)
-          Text('Loading…', style: context.text.secondary)
+          const SkeletonScope(label: 'Loading statuses', child: SkeletonChips())
         else if (options.isEmpty)
           Text(
             widget.closing
@@ -440,7 +453,7 @@ class _ReassignScreenState extends ConsumerState<ReassignScreen> with FormSubmit
           style: context.text.label,
         ),
         users.when(
-          loading: () => Text('Loading…', style: context.text.secondary),
+          loading: () => const SkeletonScope(label: 'Loading people', child: SkeletonRows(count: 4, badge: false)),
           error: (_, _) => Text("Couldn't load the list. Go back and try again.", style: context.text.secondary),
           data: (list) => GroupedList(
             children: [

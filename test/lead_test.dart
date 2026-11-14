@@ -92,4 +92,19 @@ void main() {
     expect(l.utmSource, 'meta');
     expect(l.hasLocation, isFalse);
   });
+
+  test('reads the proposed store location', () {
+    final l = Lead.fromJson({
+      'id': 1,
+      'name': 'A',
+      'store_location': {
+        'address': 'Shop 4, Hiran Magri',
+        'landmark': 'City Hospital',
+        'pincode': '313002',
+        'latitude': 24.57,
+      },
+    });
+    expect(l.storeLocation?.summary, 'Shop 4, Hiran Magri · near City Hospital · 313002');
+    expect(l.storeLocation?.latitude, 24.57);
+  });
 }

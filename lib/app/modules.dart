@@ -7,6 +7,7 @@ import '../core/icons/app_icon.dart';
 import '../features/home/home_screen.dart';
 import '../features/leads/lead_detail_screen.dart';
 import '../features/leads/leads_screen.dart';
+import '../features/onboarding/onboarding_detail_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/visits/visits_screen.dart';
@@ -76,6 +77,12 @@ final tabModules = <AppModule>[
     path: '/onboarding',
     permission: Perm.onboardingView,
     builder: (_) => const OnboardingScreen(),
+    routes: [
+      GoRoute(
+        path: ':id',
+        builder: (_, state) => OnboardingDetailScreen(id: int.parse(state.pathParameters['id']!)),
+      ),
+    ],
   ),
   AppModule(
     id: 'profile',

@@ -1,4 +1,4 @@
-# Davaindia fa
+# Davaindia Field Force
 
 The mobile app Dava India field staff use to bring new FOFO and COCO pharmacy stores on board.
 
@@ -44,7 +44,7 @@ Built so far:
 - Profile tab with contact details, app version, a copyable device ID and sign out.
 - Light and dark themes that follow the phone setting.
 - Custom icon set drawn from SVG sources, with no icon font or SVG library.
-- Launcher icon: davaindia with an italic "fa" under it on clay. Inside the app, the logo is the "fa" mark in a clay circle followed by the official davaindia lettering. Both built by `scripts/app_icon/generate.py`.
+- Launcher icon: davaindia with an italic "ff" (field force) under it on clay. Inside the app, the logo is the official davaindia icon and word, with "FIELD FORCE" in clay caps under the word. Both built by `scripts/app_icon/generate.py`.
 - Montserrat, bundled with the app.
 
 Planned next: the onboarding steps, payment recording, push notifications, and the in-app updater that installs new versions from GitHub Releases.
@@ -53,7 +53,7 @@ Planned next: the onboarding steps, payment recording, push notifications, and t
 
 | Platform | File | Requires |
 |---|---|---|
-| Android | `davaindia-fa-android.apk` from the [latest release](https://github.com/Zota-DavaIndia/fofo-business-onboarding-mobile/releases/latest) | Android 7.0 or newer |
+| Android | `davaindia-ff-android.apk` from the [latest release](https://github.com/Zota-DavaIndia/fofo-business-onboarding-mobile/releases/latest) | Android 7.0 or newer |
 | iOS | Not distributed yet. [Build from source](#getting-started) | |
 
 The first release will be published once the production CRM address is configured. Each release includes `SHA256SUMS` for checking the download. When installing the APK, Android asks you to allow installs from your browser or file manager the first time.
@@ -98,7 +98,7 @@ After adding or changing an SVG in `assets/icons/`, regenerate the icon code:
 dart run scripts/gen_icons.dart
 ```
 
-To rebuild the app icon and the "fa" mark (needs `pip install fonttools uharfbuzz`, `rsvg-convert` and ImageMagick):
+To rebuild the app icon and the "ff" mark (needs `pip install fonttools uharfbuzz`, `rsvg-convert` and ImageMagick):
 
 ```bash
 python3 scripts/app_icon/generate.py

@@ -14,7 +14,7 @@
     <uses-feature android:name="android.hardware.location.gps" android:required="false"/>
 
     <application
-        android:label="Davaindia fa"
+        android:label="Davaindia Field Force"
         android:allowBackup="false"
         android:fullBackupContent="false"
         android:name="${applicationName}"

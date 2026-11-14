@@ -103,7 +103,7 @@ jobs:
         if: steps.version.outputs.skip == 'false'
         run: |
           tag=${{ steps.version.outputs.tag }}
-          apk=davaindia-fa-android.apk
+          apk=davaindia-ff-android.apk
           mkdir -p dist
           cp build/app/outputs/flutter-apk/app-release.apk "dist/$apk"
           sha=$(sha256sum "dist/$apk" | awk '{print $1}')

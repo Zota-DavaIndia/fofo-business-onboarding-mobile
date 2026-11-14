@@ -77,6 +77,20 @@ class ApiClient {
 
   Future<ApiResponse<T>> delete<T>(String path) => _send(() => _dio.delete<dynamic>(path));
 
+  /// Multipart POST: form fields plus any number of files, keyed by field.
+  Future<ApiResponse<T>> multipart<T>(
+    String path, {
+    Map<String, Object?> fields = const {},
+    Map<String, String> files = const {},
+  }) => _send(() async {
+    final form = FormData.fromMap({
+      for (final e in fields.entries)
+        if (e.value != null) e.key: '${e.value}',
+      for (final e in files.entries) e.key: await MultipartFile.fromFile(e.value),
+    });
+    return _dio.post<dynamic>(path, data: form);
+  });
+
   /// Multipart upload of one file from disk, plus plain form fields.
   Future<ApiResponse<T>> upload<T>(String path, {required String filePath, Map<String, String> fields = const {}}) =>
       _send(() async {

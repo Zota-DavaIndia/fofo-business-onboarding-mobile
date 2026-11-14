@@ -9,6 +9,7 @@ abstract final class AppIcons {
   static const alert = AppIconData(_alert);
   static const bank = AppIconData(_bank);
   static const bell = AppIconData(_bell);
+  static const board = AppIconData(_board);
   static const calendar = AppIconData(_calendar);
   static const camera = AppIconData(_camera);
   static const chat = AppIconData(_chat);
@@ -48,6 +49,7 @@ abstract final class AppIcons {
     'alert': alert,
     'bank': bank,
     'bell': bell,
+    'board': board,
     'calendar': calendar,
     'camera': camera,
     'chat': chat,
@@ -120,6 +122,12 @@ void _bell(Path p) {
   p.close();
   p.moveTo(10, 20.5);
   p.arcToPoint(Offset(14, 20.5), radius: const Radius.circular(2), clockwise: false);
+}
+
+void _board(Path p) {
+  p.addRRect(RRect.fromRectAndRadius(Rect.fromLTWH(3.5, 4, 4.5, 16), const Radius.circular(1.5)));
+  p.addRRect(RRect.fromRectAndRadius(Rect.fromLTWH(9.75, 4, 4.5, 11), const Radius.circular(1.5)));
+  p.addRRect(RRect.fromRectAndRadius(Rect.fromLTWH(16, 4, 4.5, 7), const Radius.circular(1.5)));
 }
 
 void _calendar(Path p) {

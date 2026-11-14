@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/brand/logo.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Shown while the saved session is being restored. The "fa" circle sits at
+/// Shown while the saved session is being restored. The "ff" circle sits at
 /// the exact centre of the screen, where the native launch screen draws it,
 /// so the hand-off doesn't jump.
 class SplashScreen extends StatelessWidget {
@@ -15,7 +15,6 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final dark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, box) {
@@ -26,20 +25,13 @@ class SplashScreen extends StatelessWidget {
                 top: centre - _mark / 2,
                 left: 0,
                 right: 0,
-                child: const Center(child: FaMark(size: _mark)),
+                child: const Center(child: BrandMark(size: _mark)),
               ),
               Positioned(
                 top: centre + _mark / 2 + 28,
                 left: 0,
                 right: 0,
-                child: Center(
-                  child: Image.asset(
-                    dark ? 'assets/brand/logo-dark.png' : 'assets/brand/logo.png',
-                    width: _logoWidth,
-                    filterQuality: FilterQuality.medium,
-                    semanticLabel: 'Dava India',
-                  ),
-                ),
+                child: const Center(child: AppLogo(height: _logoWidth / 6.25)),
               ),
               Positioned(
                 bottom: 90,

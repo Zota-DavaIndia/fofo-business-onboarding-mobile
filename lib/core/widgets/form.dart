@@ -234,6 +234,17 @@ Future<DateTime?> pickDateTime(BuildContext context, {DateTime? initial, DateTim
   return DateTime(day.year, day.month, day.day, time.hour, time.minute);
 }
 
+/// A day, no time. Returns null if dismissed.
+Future<DateTime?> pickDate(BuildContext context, {DateTime? initial, DateTime? first, DateTime? last}) {
+  final now = DateTime.now();
+  final f = first ?? DateTime(now.year - 5);
+  final l = last ?? DateTime(now.year + 30);
+  var start = initial ?? now;
+  if (start.isBefore(f)) start = f;
+  if (start.isAfter(l)) start = l;
+  return showDatePicker(context: context, initialDate: start, firstDate: f, lastDate: l);
+}
+
 /// "Mon, 16 Nov · 11:00 am"
 String formatPicked(DateTime d) {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

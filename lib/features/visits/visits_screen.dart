@@ -8,6 +8,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/form.dart';
 import '../../core/widgets/page.dart';
+import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/widgets.dart';
 import '../leads/lead.dart';
 import 'visit.dart';
@@ -27,8 +28,8 @@ class VisitsScreen extends ConsumerWidget {
         ref.invalidate(visitsProvider(tab));
         await ref.read(visitsProvider(tab).future);
       },
+      header: Text('Visits', style: context.text.title),
       children: [
-        Text('Visits', style: context.text.title),
         for (final v in open) _OpenVisit(visit: v),
         Row(
           children: [
@@ -45,9 +46,15 @@ class VisitsScreen extends ConsumerWidget {
         ),
         ...visits.when(
           loading: () => [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: Space.xxl),
-              child: Text('Loading visits…', style: context.text.secondary),
+            const SkeletonScope(
+              label: 'Loading visits',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SkeletonLabel(width: 96),
+                  SkeletonRows(count: 4, lead: BoneLead.time),
+                ],
+              ),
             ),
           ],
           error: (_, _) => [

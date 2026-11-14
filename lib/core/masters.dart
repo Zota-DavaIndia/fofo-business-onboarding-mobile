@@ -36,16 +36,31 @@ typedef Choice = ({String value, String label});
 
 /// `GET /app/config` values the field screens use.
 class AppConfig {
-  const AppConfig({this.geofenceRadiusM = 100, this.maxGpsAccuracyM = 50, this.uploadMaxMb = 10});
+  const AppConfig({
+    this.geofenceRadiusM = 100,
+    this.maxGpsAccuracyM = 50,
+    this.uploadMaxMb = 10,
+    this.otpDriver,
+    this.enquiryTracking = false,
+  });
 
   final int geofenceRadiusM;
   final int maxGpsAccuracyM;
   final int uploadMaxMb;
 
+  /// `fixed | sms | field`. With `field`, the field user issues sign-in
+  /// codes to customers.
+  final String? otpDriver;
+  final bool enquiryTracking;
+
+  bool get fieldIssuesCodes => otpDriver == 'field';
+
   factory AppConfig.fromJson(Map<String, dynamic> j) => AppConfig(
     geofenceRadiusM: (j['geofence_radius_m'] as num?)?.toInt() ?? 100,
     maxGpsAccuracyM: (j['max_gps_accuracy_m'] as num?)?.toInt() ?? 50,
     uploadMaxMb: ((j['upload'] as Map?)?['max_mb'] as num?)?.toInt() ?? 10,
+    otpDriver: (j['features'] as Map?)?['otp_driver'] as String?,
+    enquiryTracking: (j['features'] as Map?)?['enquiry_tracking'] == true,
   );
 }
 

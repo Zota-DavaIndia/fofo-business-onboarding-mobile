@@ -13,6 +13,9 @@ mixin FormSubmit<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   String? fieldError(String name) => error?.fieldError(name);
 
+  /// The client saves go through. Customer forms use the customer's token.
+  ApiClient get submitApi => ref.read(apiClientProvider);
+
   /// Pops with `true`, or with [result] of what [save] returned.
   Future<void> submit(
     Future<Object?> Function(ApiClient api) save, {
@@ -25,7 +28,7 @@ mixin FormSubmit<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       error = null;
     });
     try {
-      final saved = await save(ref.read(apiClientProvider));
+      final saved = await save(submitApi);
       if (!mounted) return;
       showSaved(context, done);
       Navigator.of(context).pop(result == null ? true : result(saved));

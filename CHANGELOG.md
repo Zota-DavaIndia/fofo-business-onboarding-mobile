@@ -15,10 +15,16 @@ All notable changes to this project are documented here. The format follows [Kee
 - Leads tab with search, status filters and a lead detail page with contact, call centre notes, details, onboarding and timeline.
 - Today's visits on Home, and Home counts that open Leads on the matching list.
 - Lead actions: call, log a call, notes, status changes and closing with a reason, editing, reassigning and adding leads.
+- Check-in records the proposed store location (address, landmark, pincode, pin), shown on the lead.
 - Visits tab with scheduling, rescheduling, cancelling, GPS check-in with photo and site assessment, and check-out.
 
 ### Changed
 
+- Renamed to Davaindia Field Force: package and bundle ID `com.gitcs.davaindia.ff`, an "ff" mark in the icon, splash and in-app logo, and the APK is now `davaindia-ff-android.apk`.
+- In-app logo: the davaindia word with "FIELD FORCE" under it, replacing the ff mark and "GENERIC PHARMACY".
+- Home rebuilt from the dashboard: overview, needs attention, today, the lead-to-billing strip and recent leads; leads and onboarding boards; alerts inbox with an unread badge; pinned page headers.
+- Loading states show placeholder shapes in the layout of the content instead of text.
+- Sideways rows (Today, the lead-to-billing strip, lead filters, board tabs) run to the screen edges and fade out on the side that has more to scroll.
 - Profile moved into the bottom tabs; alerts open from the bell on Home.
 - Requires Flutter 3.50; Material widgets come from the material_ui package.
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Launch screen for Android 7 to 11: page colour with the fa mark centred. -->
+<!-- Launch screen for Android 7 to 11: page colour with the ff mark centred. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
     <item>

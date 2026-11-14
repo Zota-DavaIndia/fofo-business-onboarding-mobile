@@ -7,8 +7,13 @@ import '../../core/format.dart';
 import '../../core/icons/app_icon.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
+import '../../core/widgets/form.dart';
 import '../../core/widgets/page.dart';
 import '../../core/widgets/widgets.dart';
+import '../onboarding/onboarding.dart';
+import 'partner.dart';
+import 'customer_profile_screen.dart';
+import 'partner_forms.dart';
 import 'track.dart';
 import 'track_session.dart';
 
@@ -46,9 +51,24 @@ class _TrackScreenState extends ConsumerState<TrackScreen> {
     final header = Row(
       children: [
         const Expanded(
-          child: Align(alignment: Alignment.centerLeft, child: AppLogo(height: 30)),
+          child: Align(alignment: Alignment.centerLeft, child: AppLogo(height: 22)),
         ),
-        IconTile(AppIcons.logout, semanticLabel: 'Sign out', alignment: Alignment.centerRight, onTap: signOut),
+        if (track.accountType == 'partner')
+          IconTile(
+            AppIcons.bell,
+            semanticLabel: 'Updates',
+            onTap: () => pushForm<void>(context, const CustomerInboxScreen()),
+          ),
+        const SizedBox(width: Space.xs),
+        Semantics(
+          button: true,
+          label: 'Profile',
+          excludeSemantics: true,
+          child: GestureDetector(
+            onTap: () => pushForm<void>(context, const CustomerProfileScreen()),
+            child: Initials(track.name, size: 40),
+          ),
+        ),
       ],
     );
 
@@ -57,8 +77,8 @@ class _TrackScreenState extends ConsumerState<TrackScreen> {
         bottom: ActionBar(
           children: [AppButton(label: 'Sign in again', onPressed: signOut)],
         ),
+        header: header,
         children: [
-          header,
           const SizedBox(height: Space.xxl),
           const MessageBlock(
             icon: AppIcons.check,
@@ -71,10 +91,11 @@ class _TrackScreenState extends ConsumerState<TrackScreen> {
 
     return PageBody(
       onRefresh: _refresh,
+      header: header,
       children: [
-        header,
         const SizedBox(height: Space.xs),
         _Summary(track: track),
+        if (track.accountType == 'partner') ...[_StepActions(track: track), const PartnerDetailsList()],
         const SectionLabel('Your journey'),
         AppCard(
           padding: const EdgeInsets.fromLTRB(Space.lg, Space.lg, Space.lg, Space.xs),
@@ -249,6 +270,154 @@ class _ContactRow extends StatelessWidget {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Number copied')));
               },
             ),
+    );
+  }
+}
+
+/// The partner's own steps as tiles: done ones greyed with a tick, the one
+/// that's theirs to fill highlighted and tappable, the rest waiting or
+/// locked.
+class _StepActions extends ConsumerWidget {
+  const _StepActions({required this.track});
+
+  final Track track;
+
+  static const _order = [StepKey.storeBasics, StepKey.ownerDocuments, StepKey.payment, StepKey.drugLicence];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final me = ref.watch(partnerMeProvider).value;
+    final byKey = {for (final s in track.steps) s.key: s};
+    final steps = [
+      for (final k in _order)
+        if (byKey[k.key] != null || (k != StepKey.payment)) (k, byKey[k.key]),
+    ];
+    final fixing = me?.myTurn != null && (me?.fixing ?? false);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SectionLabel('Set up your store'),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: Space.sm,
+          crossAxisSpacing: Space.sm,
+          childAspectRatio: 1.7,
+          children: [
+            for (final (k, step) in steps)
+              _StepTile(
+                stepKey: k,
+                state: _state(k, step, me),
+                onTap: me == null ? null : () => _open(context, ref, me, k),
+              ),
+          ],
+        ),
+        if (fixing && me?.rejectionReason != null) ...[
+          const SizedBox(height: Space.sm),
+          AppCard(
+            color: context.colors.tintOf(context.colors.danger),
+            child: Text(me!.rejectionReason!, style: context.text.body),
+          ),
+        ],
+      ],
+    );
+  }
+
+  static _TileState _state(StepKey k, TrackStep? step, PartnerMe? me) {
+    if (me?.myTurn == k) return me!.fixing ? _TileState.fix : _TileState.todo;
+    return switch (step?.state) {
+      JourneyState.done => _TileState.done,
+      JourneyState.waiting => _TileState.review,
+      JourneyState.action => _TileState.todo,
+      JourneyState.rejected => _TileState.fix,
+      _ => _TileState.locked,
+    };
+  }
+
+  Future<void> _open(BuildContext context, WidgetRef ref, PartnerMe me, StepKey k) async {
+    final saved = await pushForm<bool>(context, partnerFormFor(me, k));
+    if (saved == true) {
+      ref.read(partnerRevisionProvider.notifier).bump();
+      try {
+        await ref.read(trackSessionProvider.notifier).refresh();
+      } catch (_) {}
+    }
+  }
+}
+
+enum _TileState { done, todo, fix, review, locked }
+
+class _StepTile extends StatelessWidget {
+  const _StepTile({required this.stepKey, required this.state, this.onTap});
+
+  final StepKey stepKey;
+  final _TileState state;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final label = switch (stepKey) {
+      StepKey.storeBasics => 'Store details',
+      StepKey.ownerDocuments => 'Documents',
+      StepKey.payment => 'Franchise fee',
+      StepKey.drugLicence => 'Drug licence',
+      StepKey.partnerVerification => 'Verification',
+    };
+    final icon = switch (stepKey) {
+      StepKey.storeBasics => AppIcons.store,
+      StepKey.ownerDocuments => AppIcons.id,
+      StepKey.payment => AppIcons.rupee,
+      _ => AppIcons.shield,
+    };
+    final active = state == _TileState.todo || state == _TileState.fix;
+    final (Color bg, Color fg, Color iconBg, AppIconData shown, String status) = switch (state) {
+      _TileState.todo => (c.primary, c.onPrimary, c.onPrimary.withValues(alpha: 0.18), icon, 'Fill now'),
+      _TileState.fix => (c.danger, c.onPrimary, c.onPrimary.withValues(alpha: 0.18), icon, 'Correct now'),
+      _TileState.done => (c.card, c.textTertiary, c.tintOf(c.success), AppIcons.check, 'Done'),
+      _TileState.review => (c.card, c.textSecondary, c.tintOf(c.info), AppIcons.clock, 'In review'),
+      _TileState.locked => (c.card, c.textTertiary, context.fieldFill, AppIcons.lock, 'Later'),
+    };
+    final iconColor = switch (state) {
+      _TileState.done => c.success,
+      _TileState.review => c.info,
+      _TileState.locked => c.textTertiary,
+      _ => fg,
+    };
+    return Semantics(
+      button: active,
+      enabled: active,
+      label: '$label, $status',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: active ? onTap : null,
+        child: Container(
+          padding: const EdgeInsets.all(Space.lg),
+          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(Radii.card)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(Radii.tile)),
+                child: AppIcon(shown, size: Sizes.iconSmall, color: iconColor),
+              ),
+              const Spacer(),
+              Text(
+                label,
+                style: context.text.bodyStrong.copyWith(
+                  color: active ? fg : (state == _TileState.locked ? c.textTertiary : c.textPrimary),
+                ),
+              ),
+              Text(status, style: context.text.label.copyWith(color: active ? fg.withValues(alpha: 0.9) : fg)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
