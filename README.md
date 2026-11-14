@@ -97,7 +97,7 @@ After adding or changing an SVG in `assets/icons/`, regenerate the icon code:
 dart run scripts/gen_icons.dart
 ```
 
-To rebuild the app icon and in-app logo (needs `pip install fonttools`, `rsvg-convert` and ImageMagick):
+To rebuild the app icon and in-app logo (needs `pip install fonttools uharfbuzz`, `rsvg-convert` and ImageMagick):
 
 ```bash
 python3 scripts/app_icon/generate.py
