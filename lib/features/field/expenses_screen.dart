@@ -145,6 +145,7 @@ class _ExpensesScreenState extends ConsumerState<ExpensesScreen> {
           ],
         ),
         ...data.when(
+          skipLoadingOnReload: true,
           loading: () => [
             const SkeletonScope(
               label: 'Loading expenses',

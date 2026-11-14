@@ -50,6 +50,7 @@ class OnboardingScreen extends ConsumerWidget {
           ],
         ),
         ...list.when(
+          skipLoadingOnReload: true,
           loading: () => [
             const SkeletonScope(
               label: 'Loading onboardings',

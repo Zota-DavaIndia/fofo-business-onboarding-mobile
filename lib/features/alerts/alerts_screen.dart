@@ -33,14 +33,18 @@ class AlertsScreen extends ConsumerWidget {
         await ref.read(alertsProvider.future);
       },
       children: [
-        PageHeader(
-          'Alerts',
-          onBack: () => context.canPop() ? context.pop() : context.go('/home'),
-          trailing: (inbox.value?.unread ?? 0) > 0
-              ? TextLink(label: 'Mark all read', onTap: () => markAllAlertsRead(ref))
-              : null,
-        ),
+        PageHeader('Alerts', onBack: () => context.canPop() ? context.pop() : context.go('/home')),
+        // On its own line, not at the top right: that's where the bell is on Home, so a double tap
+        // on the bell would otherwise clear every unread alert.
+        if ((inbox.value?.unread ?? 0) > 0)
+          Row(
+            children: [
+              Expanded(child: Text('${inbox.value!.unread} unread', style: context.text.label)),
+              TextLink(label: 'Mark all read', onTap: () => markAllAlertsRead(ref)),
+            ],
+          ),
         ...inbox.when(
+          skipLoadingOnReload: true,
           loading: () => [
             const SkeletonScope(
               label: 'Loading alerts',
@@ -100,12 +104,12 @@ class AlertsScreen extends ConsumerWidget {
                                 ),
                             ],
                           ),
-                          onTap: () async {
-                            if (!a.read) await markAlertRead(ref, a.id);
-                            if (context.mounted &&
-                                (a.route != null || const {'ticket', 'expense', 'leave'}.contains(a.entity))) {
+                          // Open first and mark read in the background, so the screen slides in at once.
+                          onTap: () {
+                            if (a.route != null || const {'ticket', 'expense', 'leave'}.contains(a.entity)) {
                               openAlert(context, entity: a.entity, entityId: a.entityId);
                             }
+                            if (!a.read) markAlertRead(ref, a.id).ignore();
                           },
                         ),
                     ],

@@ -73,6 +73,7 @@ class LeaveScreen extends ConsumerWidget {
         ),
       ),
       children: data.when(
+        skipLoadingOnReload: true,
         loading: () => [
           const SkeletonScope(
             label: 'Loading leave',

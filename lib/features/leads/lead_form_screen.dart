@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/icons/app_icon.dart';
 import '../../core/masters.dart';
+import '../../core/auth/permissions.dart';
 import '../../core/auth/session.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
@@ -193,7 +194,13 @@ class _LeadFormScreenState extends ConsumerState<LeadFormScreen> with FormSubmit
 
   @override
   Widget build(BuildContext context) {
-    final sources = ref.watch(sourcesProvider).value ?? const [];
+    // Field users (who see only their own leads) add the people they meet: walk-ins and referrals.
+    final user = ref.watch(sessionProvider).value;
+    final fieldOnly = !(user?.can(Perm.leadsViewAll) ?? false) && (user?.can(Perm.visitsManage) ?? false);
+    final sources = [
+      for (final s in ref.watch(sourcesProvider).value ?? const <Choice>[])
+        if (!fieldOnly || s.value == 'walk_in' || s.value == 'referral') s,
+    ];
     final duplicate = error?.code == 'duplicate_lead';
     return FormPage(
       title: _adding ? 'Add a lead' : 'Edit lead',

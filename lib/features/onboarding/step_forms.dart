@@ -495,6 +495,8 @@ class _OwnerDocsState extends ConsumerState<OwnerDocsScreen> with FormSubmit {
   void _save(List<DocType> types) {
     _err.clear();
     if (_t(_name) == null) _err['owner_name'] = "Enter the owner's name.";
+    final mobile = _mobile.text.replaceAll(RegExp(r'\D'), '');
+    if (!RegExp(r'^[6-9]\d{9}$').hasMatch(mobile)) _err['owner_mobile'] = "Enter the owner's 10-digit mobile.";
     final pan = _pan.text.trim().toUpperCase();
     if (!_panRe.hasMatch(pan)) _err['owner_pan'] = 'PAN looks like ABCDE1234F.';
     final aadhaar = _aadhaar.text.replaceAll(' ', '');
@@ -521,7 +523,7 @@ class _OwnerDocsState extends ConsumerState<OwnerDocsScreen> with FormSubmit {
         '/onboardings/${o.id}/owner',
         body: {
           'owner_name': _t(_name),
-          'owner_mobile': ?_t(_mobile),
+          'owner_mobile': _mobile.text.replaceAll(RegExp(r'\D'), ''),
           'owner_email': ?_t(_email),
           'owner_address': ?_t(_address),
           'owner_pan': pan,
@@ -902,8 +904,8 @@ class _RecordPaymentState extends ConsumerState<RecordPaymentScreen> with FormSu
 
   void _save() {
     _err.clear();
-    final utr = _utr.text.trim().toUpperCase();
-    if (utr.length < 6) _err['utr'] = 'Enter the UTR or reference from the bank.';
+    final utr = cleanUtr(_utr.text);
+    if (!isUtr(utr)) _err['utr'] = 'The UTR is 10 to 22 letters or digits, from the bank advice.';
     final amount = double.tryParse(_amount.text.trim());
     if (amount == null || amount <= 0) _err['amount'] = 'Enter the amount transferred.';
     if (_date == null) _err['payment_date'] = 'Pick the transfer date.';

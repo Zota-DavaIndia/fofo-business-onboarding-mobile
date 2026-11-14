@@ -81,6 +81,7 @@ class DayPlanScreen extends ConsumerWidget {
         ),
       ),
       children: plan.when(
+        skipLoadingOnReload: true,
         loading: () => [
           const SkeletonScope(
             label: 'Loading your plan',

@@ -109,6 +109,7 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
           }),
         ),
         ...leads.when(
+          skipLoadingOnReload: true,
           loading: () => [const SkeletonScope(label: 'Loading leads', child: SkeletonRows(count: 6))],
           error: (_, _) => [
             const SizedBox(height: Space.xl),

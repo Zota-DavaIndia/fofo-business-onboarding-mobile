@@ -126,6 +126,7 @@ class _StoreScreenState extends ConsumerState<StoreScreen> {
               ],
             ),
       children: store.when(
+        skipLoadingOnReload: true,
         loading: () => [
           const SkeletonScope(child: Column(children: [SkeletonRows(count: 1), SkeletonCard(lines: 4)])),
         ],

@@ -20,6 +20,7 @@ import '../visits/visit_forms.dart';
 import 'lead.dart';
 import 'lead_actions.dart';
 import 'lead_status.dart';
+import '../onboarding/onboarding_detail_screen.dart';
 import '../../core/widgets/toast.dart';
 
 class LeadDetailScreen extends ConsumerWidget {
@@ -32,6 +33,7 @@ class LeadDetailScreen extends ConsumerWidget {
     final lead = ref.watch(leadProvider(id));
     final back = PageHeader('Lead', onBack: () => context.canPop() ? context.pop() : context.go('/leads'));
     return lead.when(
+      skipLoadingOnReload: true,
       loading: () => PageBody(children: [back, const _LeadSkeleton()]),
       error: (_, _) => PageBody(
         children: [
@@ -176,7 +178,10 @@ class LeadDetailScreen extends ConsumerWidget {
       if (l.onboarding case final o?) ...[
         SectionLabel(
           'Onboarding',
-          action: TextLink(label: 'Open', onTap: () => context.go('/onboarding/${o.id}')),
+          action: TextLink(
+            label: 'Open',
+            onTap: () => pushForm<void>(context, OnboardingDetailScreen(id: o.id)),
+          ),
         ),
         GroupedList(
           children: [
@@ -474,6 +479,7 @@ class _Timeline extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final items = ref.watch(leadActivitiesProvider(id));
     return items.when(
+      skipLoadingOnReload: true,
       loading: () => const SkeletonScope(
         label: 'Loading timeline',
         child: SkeletonRows(count: 3, lead: BoneLead.none, badge: false),

@@ -55,6 +55,7 @@ class OnboardingDetailScreen extends ConsumerWidget {
       onBack: () => context.canPop() ? context.pop() : context.go('/onboarding'),
     );
     return ob.when(
+      skipLoadingOnReload: true,
       loading: () => PageBody(
         children: [
           back,
@@ -302,6 +303,7 @@ class _Timeline extends ConsumerWidget {
     return ref
         .watch(onboardingActivitiesProvider(id))
         .when(
+          skipLoadingOnReload: true,
           loading: () => const SkeletonScope(
             label: 'Loading timeline',
             child: SkeletonRows(count: 3, lead: BoneLead.none, badge: false),

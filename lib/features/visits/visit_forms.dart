@@ -608,6 +608,7 @@ class _CheckOutScreenState extends ConsumerState<CheckOutScreen> with FormSubmit
   final _summary = TextEditingController();
   final _clientId = newClientId();
   String? _localError;
+  String? _summaryError;
 
   @override
   void dispose() {
@@ -622,9 +623,12 @@ class _CheckOutScreenState extends ConsumerState<CheckOutScreen> with FormSubmit
       'not_qualified' || 'dropped' when _reason == null => 'Pick a reason.',
       _ => null,
     };
-    setState(() => _localError = err);
-    if (err != null) return;
     final summary = _summary.text.trim();
+    setState(() {
+      _localError = err;
+      _summaryError = summary.isEmpty ? 'Add a short summary of the visit.' : null;
+    });
+    if (err != null || _summaryError != null) return;
     submit(
       (api) => api.post<dynamic>(
         '/leads/${widget.visit.leadId}/visits',
@@ -634,7 +638,7 @@ class _CheckOutScreenState extends ConsumerState<CheckOutScreen> with FormSubmit
           'captured_at': isoWithOffset(DateTime.now()),
           'visit_id': widget.visit.id,
           'outcome': _outcome,
-          if (summary.isNotEmpty) 'summary': summary,
+          'summary': summary,
           if (_outcome == 'not_qualified' || _outcome == 'dropped') 'reason': _reason,
           if (_outcome == 'follow_up') 'next_visit_at': isoWithOffset(_nextVisit!),
         },
@@ -726,7 +730,10 @@ class _CheckOutScreenState extends ConsumerState<CheckOutScreen> with FormSubmit
           minLines: 3,
           maxLines: 6,
           textCapitalization: TextCapitalization.sentences,
-          errorText: fieldError('summary'),
+          errorText: _summaryError ?? fieldError('summary'),
+          onChanged: (_) {
+            if (_summaryError != null) setState(() => _summaryError = null);
+          },
         ),
       ],
     );

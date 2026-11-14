@@ -541,6 +541,7 @@ final onboardingsProvider = FutureProvider.autoDispose.family<List<Onboarding>, 
 });
 
 final onboardingProvider = FutureProvider.autoDispose.family<Onboarding, int>((ref, id) async {
+  cacheFor(ref, const Duration(minutes: 1));
   ref.watch(liveSignalProvider(LiveTopic.onboarding));
   final res = await ref.watch(apiClientProvider).get<Map<String, dynamic>>('/onboardings/$id');
   return Onboarding.fromJson(res.data);

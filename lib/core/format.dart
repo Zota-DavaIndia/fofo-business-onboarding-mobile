@@ -17,3 +17,9 @@ String formatShortDay(DateTime d) {
   final full = formatDay(d);
   return d.year == DateTime.now().year ? full.substring(0, full.length - 5) : full;
 }
+
+/// A UTR as the bank checks it: spaces and hyphens dropped, upper case.
+String cleanUtr(String input) => input.replaceAll(RegExp(r'[\s-]'), '').toUpperCase();
+
+/// Same rule as the CRM: 10 to 22 letters or digits once cleaned.
+bool isUtr(String cleaned) => RegExp(r'^[A-Z0-9]{10,22}$').hasMatch(cleaned);

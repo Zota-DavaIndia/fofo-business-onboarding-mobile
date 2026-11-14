@@ -4,6 +4,28 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-15
+
+### Added
+
+- Field users can add walk-in and referral leads.
+- Day and time pickers in the app's own style: a month grid and an hour, minute and am/pm wheel. New times start in working hours, and times outside the allowed range are refused.
+
+### Changed
+
+- Opening an alert slides its lead, onboarding, ticket, claims or leave screen in over the current one, so Back returns to the alert. It opens at once and is marked read in the background. A double tap opens it once.
+- Screens keep their content while live updates refresh them, instead of briefly showing the loading skeleton again. A lead or onboarding opened again within a minute shows at once.
+- Messages appear in a compact toast near the bottom, above the tab bar or the form's button. No toast while the alerts inbox is open, and "Mark all read" sits under the inbox header.
+- Lead and onboarding details from Home slide in over Home instead of switching tabs.
+- Check-out asks for a summary, and the owner step needs a 10-digit mobile. UTRs follow the bank rule (10 to 22 letters or digits; spaces and hyphens are ignored).
+
+### Fixed
+
+- Check-out on a lead that had already moved on did nothing; it now closes the visit.
+- The date picker showed empty boxes in place of its arrows.
+- A save the server refused for a reason with no field on the form failed silently; it now shows a toast.
+- Route tracking kept resending points the server had refused.
+
 ## [1.0.0] - 2026-11-14
 
 ### Added

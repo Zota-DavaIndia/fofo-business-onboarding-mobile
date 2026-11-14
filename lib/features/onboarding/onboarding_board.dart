@@ -31,6 +31,7 @@ class OnboardingBoardScreen extends ConsumerWidget {
     return BoardView(
       title: 'Onboarding board',
       columns: board.when(
+        skipLoadingOnReload: true,
         data: (d) => AsyncSnapshot.withData(ConnectionState.done, d),
         error: (e, _) => AsyncSnapshot.withError(ConnectionState.done, e),
         loading: () => const AsyncSnapshot.waiting(),

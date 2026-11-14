@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../core/auth/permissions.dart';
 import '../../core/auth/session.dart';
 import '../../core/masters.dart';
+import '../../core/network/api_client.dart';
 import 'field.dart';
 
 /// Records the route while the working day runs: a position stream (kept
@@ -106,6 +107,11 @@ class DayTracker {
     if (_pending.length >= 10) flush();
   }
 
+  /// Don't let points for a dead day grow the file forever.
+  void _trim() {
+    if (_pending.length > 5000) _pending.removeRange(0, _pending.length - 5000);
+  }
+
   Future<void> flush() async {
     if (_flushing || _pending.isEmpty) return;
     _flushing = true;
@@ -115,10 +121,17 @@ class DayTracker {
       _pending.removeRange(0, batch.length);
       await _save();
       _ref.invalidate(todayProvider);
+    } on ApiException catch (e) {
+      // 409 (the day is over) or 422 (points the server won't take) will fail the same way every time,
+      // so drop the batch rather than resend it every two minutes.
+      if (e.status == 409 || e.status == 422) {
+        _pending.removeRange(0, batch.length);
+        await _save();
+      } else {
+        _trim();
+      }
     } catch (_) {
-      // Offline or the day was ended elsewhere: keep them for the next try,
-      // but don't let a dead day grow the file forever.
-      if (_pending.length > 5000) _pending.removeRange(0, _pending.length - 5000);
+      _trim(); // offline: keep them for the next try
     } finally {
       _flushing = false;
     }

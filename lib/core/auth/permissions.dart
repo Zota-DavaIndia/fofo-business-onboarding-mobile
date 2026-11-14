@@ -3,6 +3,7 @@
 abstract final class Perm {
   static const leadsView = 'leads.view';
   static const leadsCreate = 'leads.create';
+  static const leadsViewAll = 'leads.view_all';
   static const leadsUpdate = 'leads.update';
   static const leadsStatus = 'leads.status';
   static const leadsAssign = 'leads.assign';

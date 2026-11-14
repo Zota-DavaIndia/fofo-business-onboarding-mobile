@@ -28,6 +28,7 @@ class LeadsBoardScreen extends ConsumerWidget {
     return BoardView(
       title: 'Leads board',
       columns: board.when(
+        skipLoadingOnReload: true,
         data: (d) => AsyncSnapshot.withData(ConnectionState.done, d),
         error: (e, _) => AsyncSnapshot.withError(ConnectionState.done, e),
         loading: () => const AsyncSnapshot.waiting(),

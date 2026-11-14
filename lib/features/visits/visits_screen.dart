@@ -45,6 +45,7 @@ class VisitsScreen extends ConsumerWidget {
           ],
         ),
         ...visits.when(
+          skipLoadingOnReload: true,
           loading: () => [
             const SkeletonScope(
               label: 'Loading visits',

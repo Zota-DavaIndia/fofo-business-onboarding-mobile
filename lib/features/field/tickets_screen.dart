@@ -45,6 +45,7 @@ class _TicketsScreenState extends ConsumerState<TicketsScreen> {
           ],
         ),
         ...data.when(
+          skipLoadingOnReload: true,
           loading: () => [const SkeletonScope(label: 'Loading tickets', child: SkeletonRows(count: 4))],
           error: (_, _) => [
             MessageBlock(
@@ -103,6 +104,7 @@ class TicketScreen extends ConsumerWidget {
       onRefresh: () => ref.refresh(ticketProvider(id).future),
       header: PageHeader('Ticket', onBack: () => Navigator.of(context).maybePop()),
       children: t.when(
+        skipLoadingOnReload: true,
         loading: () => [const SkeletonScope(child: SkeletonCard(lines: 4))],
         error: (_, _) => [
           MessageBlock(icon: AppIcons.alert, title: "Couldn't load this ticket", body: 'Pull down to try again.'),

@@ -11,8 +11,9 @@ enum ToastKind { success, error, info }
 OverlayEntry? _current;
 Timer? _timer;
 
-/// A short message at the top of the screen in the app's own style: a flat card with a
-/// toned icon. One at a time; a new one replaces the last. Tap to dismiss.
+/// A short message near the bottom of the screen, above the tab bar or a form's action bar, in the
+/// app's own style: a compact flat card with a toned icon. One at a time; a new one replaces the last.
+/// Tap to act on it, swipe down to dismiss.
 void showToast(
   BuildContext context,
   String message, {
@@ -104,10 +105,10 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
       child: GestureDetector(
         onTap: widget.onTap,
         onVerticalDragEnd: (d) {
-          if ((d.primaryVelocity ?? 0) < 0) widget.onDismiss();
+          if ((d.primaryVelocity ?? 0) > 0) widget.onDismiss();
         },
         child: Container(
-          padding: const EdgeInsets.fromLTRB(Space.md, Space.md, Space.lg, Space.md),
+          padding: const EdgeInsets.fromLTRB(Space.sm, Space.sm, Space.md, Space.sm),
           decoration: BoxDecoration(
             color: c.card,
             borderRadius: BorderRadius.circular(Radii.card),
@@ -116,13 +117,13 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
           child: Row(
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 26,
+                height: 26,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(color: c.tintOf(tone), borderRadius: BorderRadius.circular(Radii.tile)),
-                child: AppIcon(icon, size: 16, color: tone),
+                decoration: BoxDecoration(color: c.tintOf(tone), borderRadius: BorderRadius.circular(Radii.tile - 2)),
+                child: AppIcon(icon, size: 14, color: tone),
               ),
-              const SizedBox(width: Space.md),
+              const SizedBox(width: Space.sm),
               Expanded(
                 // "Title\nDetail": the first line reads as the title, the rest as detail.
                 child: Column(
@@ -131,16 +132,18 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
                     for (final (i, line) in widget.message.split('\n').indexed)
                       Text(
                         line,
-                        style: i == 0 && widget.message.contains('\n')
-                            ? context.text.bodyStrong.copyWith(color: c.textPrimary)
-                            : i == 0
-                            ? context.text.body.copyWith(color: c.textPrimary)
-                            : context.text.label,
+                        style: i == 0
+                            ? context.text.label.copyWith(
+                                color: c.textPrimary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              )
+                            : context.text.caption.copyWith(color: c.textSecondary),
                       ),
                   ],
                 ),
               ),
-              if (widget.action) AppIcon(AppIcons.right, size: Sizes.iconSmall, color: c.textTertiary),
+              if (widget.action) AppIcon(AppIcons.right, size: 14, color: c.textTertiary),
             ],
           ),
         ),
@@ -149,7 +152,8 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
     return Positioned(
       left: Space.screen,
       right: Space.screen,
-      top: MediaQuery.paddingOf(context).top + Space.sm,
+      // Clear of the tab bar and of a form's bottom button.
+      bottom: MediaQuery.paddingOf(context).bottom + Sizes.tabBar + Space.md,
       child: Material(
         type: MaterialType.transparency,
         child: still
@@ -158,7 +162,7 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
                 opacity: _anim,
                 child: SlideTransition(
                   position: Tween(
-                    begin: const Offset(0, -0.4),
+                    begin: const Offset(0, 0.4),
                     end: Offset.zero,
                   ).animate(CurvedAnimation(parent: _anim, curve: Curves.easeOut)),
                   child: card,

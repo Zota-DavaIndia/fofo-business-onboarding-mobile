@@ -11,7 +11,13 @@ mixin FormSubmit<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   bool submitting = false;
   ApiException? error;
 
-  String? fieldError(String name) => error?.fieldError(name);
+  /// Fields this form has asked for errors under, i.e. the ones it can show.
+  final _shownFields = <String>{};
+
+  String? fieldError(String name) {
+    _shownFields.add(name);
+    return error?.fieldError(name);
+  }
 
   /// The client saves go through. Customer forms use the customer's token.
   ApiClient get submitApi => ref.read(apiClientProvider);
@@ -35,7 +41,14 @@ mixin FormSubmit<T extends ConsumerStatefulWidget> on ConsumerState<T> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => error = e);
-      if (e.fieldErrors.isEmpty) showSaveError(context, e);
+      // A rule the server checks on a field this form has no place for (say "status") would
+      // otherwise fail silently, so say it in a toast once the form has rebuilt.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (e.fieldErrors.isEmpty || e.fieldErrors.keys.any((k) => !_shownFields.contains(k))) {
+          showSaveError(context, e);
+        }
+      });
     } finally {
       if (mounted) setState(() => submitting = false);
     }

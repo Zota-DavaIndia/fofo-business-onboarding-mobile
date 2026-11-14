@@ -456,6 +456,7 @@ class _ReassignScreenState extends ConsumerState<ReassignScreen> with FormSubmit
           style: context.text.label,
         ),
         users.when(
+          skipLoadingOnReload: true,
           loading: () => const SkeletonScope(label: 'Loading people', child: SkeletonRows(count: 4, badge: false)),
           error: (_, _) => Text("Couldn't load the list. Go back and try again.", style: context.text.secondary),
           data: (list) => GroupedList(

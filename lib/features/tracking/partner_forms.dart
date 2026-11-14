@@ -607,7 +607,7 @@ class _PartnerReportPaymentState extends ConsumerState<PartnerReportPaymentScree
 
   void _save() {
     _err.clear();
-    if (_utr.text.trim().length < 6) _err['utr'] = 'Enter the UTR or reference from your bank.';
+    if (!isUtr(cleanUtr(_utr.text))) _err['utr'] = 'The UTR is 10 to 22 letters or digits, from your bank advice.';
     final amount = double.tryParse(_amount.text.trim());
     if (amount == null || amount <= 0) _err['payment_amount'] = 'Enter the amount you sent.';
     if (_proof == null) _err['proof'] = 'Add the payment advice or a screenshot.';
@@ -617,7 +617,7 @@ class _PartnerReportPaymentState extends ConsumerState<PartnerReportPaymentScree
       (api) => api.multipart<dynamic>(
         '/partner/payment',
         fields: {
-          'utr': _utr.text.trim().toUpperCase(),
+          'utr': cleanUtr(_utr.text),
           'payment_date': isoDay(_date!),
           'payment_amount': amount,
           'payment_mode': _mode,
@@ -836,6 +836,7 @@ class CustomerInboxScreen extends ConsumerWidget {
               : null,
         ),
         ...inbox.when(
+          skipLoadingOnReload: true,
           loading: () => [const SkeletonScope(child: SkeletonRows(count: 4, lead: BoneLead.tile, badge: false))],
           error: (_, _) => [
             const SizedBox(height: Space.xl),

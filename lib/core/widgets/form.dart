@@ -5,6 +5,7 @@ import '../icons/app_icon.dart';
 import '../network/api_client.dart';
 import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
+import 'date_sheet.dart';
 import 'page.dart';
 import 'widgets.dart';
 import 'toast.dart';
@@ -222,17 +223,45 @@ class _FieldLabel extends StatelessWidget {
 /// Date, then time. Returns null if either is dismissed.
 Future<DateTime?> pickDateTime(BuildContext context, {DateTime? initial, DateTime? first, DateTime? last}) async {
   final now = DateTime.now();
-  final start = initial ?? now.add(const Duration(hours: 1));
-  final day = await showDatePicker(
-    context: context,
-    initialDate: start,
-    firstDate: first ?? DateTime(now.year, now.month, now.day),
-    lastDate: last ?? now.add(const Duration(days: 365)),
+  final start = initial ?? suggestedSlot(now);
+  final day = await showDateSheet(
+    context,
+    initial: start,
+    first: first ?? DateTime(now.year, now.month, now.day),
+    last: last ?? now.add(const Duration(days: 365)),
   );
   if (day == null || !context.mounted) return null;
-  final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(start));
-  if (time == null) return null;
-  return DateTime(day.year, day.month, day.day, time.hour, time.minute);
+  // The day sheet keeps the day in range; the time has to be checked too (9 am today, at noon, is past).
+  final earliest = first ?? now;
+  var initialTime = TimeOfDay.fromDateTime(start);
+  while (context.mounted) {
+    final time = await showTimeSheet(context, initial: initialTime);
+    if (time == null) return null;
+    final picked = DateTime(day.year, day.month, day.day, time.hour, time.minute);
+    final tooEarly = picked.isBefore(earliest.subtract(const Duration(minutes: 1)));
+    final tooLate = last != null && picked.isAfter(last);
+    if (!tooEarly && !tooLate) return picked;
+    if (context.mounted) {
+      showToast(
+        context,
+        tooEarly ? 'Pick a time later than now.' : 'Pick a time no later than now.',
+        kind: ToastKind.error,
+      );
+    }
+    initialTime = time;
+  }
+  return null;
+}
+
+/// Where a new visit or call time starts: an hour from now, on a 5-minute step, during working hours
+/// (9 am to 7 pm); otherwise 11 am, the next day when it's already evening.
+DateTime suggestedSlot(DateTime now) {
+  final soon = now.add(const Duration(hours: 1));
+  if (soon.hour >= 9 && soon.hour < 19 && soon.day == now.day) {
+    return DateTime(soon.year, soon.month, soon.day, soon.hour, (soon.minute / 5).ceil() * 5);
+  }
+  final day = now.hour >= 19 ? now.add(const Duration(days: 1)) : now;
+  return DateTime(day.year, day.month, day.day, 11);
 }
 
 /// A day, no time. Returns null if dismissed.
@@ -243,7 +272,7 @@ Future<DateTime?> pickDate(BuildContext context, {DateTime? initial, DateTime? f
   var start = initial ?? now;
   if (start.isBefore(f)) start = f;
   if (start.isAfter(l)) start = l;
-  return showDatePicker(context: context, initialDate: start, firstDate: f, lastDate: l);
+  return showDateSheet(context, initial: start, first: f, last: l);
 }
 
 /// "Mon, 16 Nov · 11:00 am"

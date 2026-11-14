@@ -43,6 +43,16 @@ Set<LiveTopic> topicsForEvent(String type) {
   };
 }
 
+/// Keeps an auto-disposed provider's data for [duration] after its screen closes, so opening the same
+/// lead or onboarding again shows it at once instead of a loading skeleton.
+void cacheFor(Ref ref, Duration duration) {
+  final link = ref.keepAlive();
+  Timer? timer;
+  ref.onCancel(() => timer = Timer(duration, link.close));
+  ref.onResume(() => timer?.cancel());
+  ref.onDispose(() => timer?.cancel());
+}
+
 void refreshTopics(WidgetRef ref, Iterable<LiveTopic> topics) {
   for (final t in topics) {
     ref.read(liveSignalProvider(t).notifier).bump();

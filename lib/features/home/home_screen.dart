@@ -25,6 +25,7 @@ import '../onboarding/onboarding.dart';
 import '../onboarding/onboarding_board.dart';
 import 'dashboard.dart';
 import 'stat_card.dart';
+import '../leads/lead_detail_screen.dart';
 import '../update/update_screen.dart';
 
 /// Opens the list behind an attention row or a tile.
@@ -386,7 +387,7 @@ class _RecentLeads extends StatelessWidget {
             ].join(' · '),
             leading: Initials(l.name),
             trailing: l.statusLabel == null ? null : StatusBadge(l.statusLabel!, tone: toneForStatus(l.status ?? '')),
-            onTap: () => context.go('/leads/${l.id}'),
+            onTap: () => pushForm<void>(context, LeadDetailScreen(id: l.id)),
           ),
       ],
     );

@@ -28,6 +28,8 @@ class TabShell extends ConsumerWidget {
 
     return LiveRefresh(
       onAlerts: (context, items) {
+        // The inbox already shows new alerts as they arrive; a toast there would repeat them.
+        if (GoRouter.of(context).routerDelegate.currentConfiguration.uri.path == '/alerts') return;
         // One toast for the newest alert; several at once point to the inbox.
         final last = items.last;
         final many = items.length > 1;

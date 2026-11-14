@@ -358,6 +358,7 @@ final leadsProvider = FutureProvider.autoDispose<List<Lead>>((ref) async {
 });
 
 final leadProvider = FutureProvider.autoDispose.family<Lead, int>((ref, id) async {
+  cacheFor(ref, const Duration(minutes: 1));
   ref.watch(liveSignalProvider(LiveTopic.leads));
   final res = await ref.watch(apiClientProvider).get<Map<String, dynamic>>('/leads/$id');
   return Lead.fromJson(res.data);
