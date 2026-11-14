@@ -71,7 +71,13 @@ flutter run --dart-define-from-file=env/demo.json
 
 Any email and password signs in.
 
-Run against a CRM backend:
+Run against the staging CRM:
+
+```bash
+flutter run --dart-define-from-file=env/staging.json
+```
+
+Run against a local CRM backend:
 
 ```bash
 cp env/example.json env/local.json
@@ -118,7 +124,7 @@ The release workflow then tests, builds and signs the APK, checks the signature,
 | `ANDROID_KEYSTORE_PASSWORD` | secret | Keystore password |
 | `ANDROID_KEY_ALIAS` | secret | Key alias |
 | `ANDROID_KEY_PASSWORD` | secret | Key password |
-| `API_BASE_URL` | variable | CRM API address baked into the release build; releases are skipped until it's set |
+| `API_BASE_URL` | variable | Production CRM API address baked into release builds; releases are skipped until it's set. Staging is in `env/staging.json` |
 
 ## Project structure
 

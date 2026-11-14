@@ -6,7 +6,7 @@ This is the field onboarding app for Dava India. Work happens in branches and la
 
 1. Install Flutter (stable, 3.44 or newer) and Xcode for the iOS simulator.
 2. `flutter pub get`
-3. Copy `env/example.json` to `env/local.json` and point `API_BASE_URL` at your CRM backend.
+3. Copy `env/example.json` to `env/local.json`. It points at the staging CRM API; change `API_BASE_URL` only to use another backend. Release builds take the production address from the `API_BASE_URL` repository variable.
 
 ## Run
 
@@ -14,7 +14,7 @@ This is the field onboarding app for Dava India. Work happens in branches and la
 flutter run --dart-define-from-file=env/demo.json
 ```
 
-`env/demo.json` answers the API with sample data, so you can try the app in a simulator without a backend. Use `env/local.json` against a real CRM.
+`env/demo.json` answers the API with sample data, so you can try the app in a simulator without a backend. `env/staging.json` points at the staging CRM; `env/local.json` at your own.
 
 Android builds are made only by the release workflow on GitHub. Check changes locally in the iOS simulator and with the tests.
 

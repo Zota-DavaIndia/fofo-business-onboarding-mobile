@@ -1,4 +1,4 @@
 {
   "APP_ENV": "demo",
-  "API_BASE_URL": "http://localhost/davaindia-crm/public/api/v1"
+  "API_BASE_URL": "https://davaindiafofo.gitcsdemoserver.online/api/v1"
 }
