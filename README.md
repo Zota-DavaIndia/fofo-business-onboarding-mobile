@@ -1,4 +1,4 @@
-# Davaindia Field
+# Davaindia fa
 
 The mobile app Dava India field staff use to bring new FOFO and COCO pharmacy stores on board.
 
@@ -40,7 +40,7 @@ Built so far:
 - Profile tab with contact details, app version, a copyable device ID and sign out.
 - Light and dark themes that follow the phone setting.
 - Custom icon set drawn from SVG sources, with no icon font or SVG library.
-- The "fa" mark (italic, white on clay) is the launcher icon and leads the in-app logo, followed by the official davaindia lettering. Generated from vector outlines by `scripts/app_icon/generate.py`.
+- Launcher icon: davaindia with an italic "fa" under it on clay. Inside the app, the logo is the "fa" mark in a clay circle followed by the official davaindia lettering. Both built by `scripts/app_icon/generate.py`.
 - Montserrat, bundled with the app.
 - Demo mode that answers the API with sample data.
 
@@ -50,7 +50,7 @@ Planned next: the lead list and detail, visit scheduling with GPS check-in, the 
 
 | Platform | File | Requires |
 |---|---|---|
-| Android | `davaindia-field-android.apk` from the [latest release](https://github.com/Zota-DavaIndia/fofo-business-onboarding-mobile/releases/latest) | Android 7.0 or newer |
+| Android | `davaindia-fa-android.apk` from the [latest release](https://github.com/Zota-DavaIndia/fofo-business-onboarding-mobile/releases/latest) | Android 7.0 or newer |
 | iOS | Not distributed yet. [Build from source](#getting-started) | |
 
 The first release will be published once the production CRM address is configured. Each release includes `SHA256SUMS` for checking the download. When installing the APK, Android asks you to allow installs from your browser or file manager the first time.

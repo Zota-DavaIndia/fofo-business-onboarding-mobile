@@ -18,7 +18,7 @@ class AppLogo extends StatelessWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final h = height;
     return Semantics(
-      label: 'Dava India field app',
+      label: 'Davaindia fa',
       image: true,
       excludeSemantics: true,
       child: Row(
