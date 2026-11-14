@@ -1,11 +1,9 @@
-"""Builds the launcher icon and the "fa" tag of the in-app logo from glyph
-outlines.
+"""Builds the launcher icon and the "fa" mark used in the in-app logo.
 
-The logo is the davaindia wordmark (Montserrat Bold) with "fa" (Montserrat
-ExtraBold Italic). Text is shaped with HarfBuzz so kerning matches what the
-font intends, then converted to vector paths: the icon PNGs and the Dart
-code for the in-app logo need no font at runtime. Montserrat is under the
-SIL Open Font License (see scripts/app_icon/fonts/OFL.txt).
+The mark is "fa" in Montserrat ExtraBold Italic, white on the app's clay
+colour. Letters are shaped with HarfBuzz and converted to vector paths, so
+neither the icon nor the app needs the font at runtime. Montserrat is under
+the SIL Open Font License (see scripts/app_icon/fonts/OFL.txt).
 
 Needs fontTools and uharfbuzz (pip install fonttools uharfbuzz),
 rsvg-convert and ImageMagick.
@@ -17,77 +15,88 @@ import json
 import subprocess
 from pathlib import Path
 
+import uharfbuzz as hb
 from fontTools.pens.basePen import BasePen
 from fontTools.pens.boundsPen import BoundsPen
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 from fontTools.ttLib import TTFont
-import uharfbuzz as hb
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = Path(__file__).resolve().parent / "out"
-WORDMARK_FONT = ROOT / "assets/fonts/montserrat/Montserrat-Bold.ttf"
-FA_FONT = Path(__file__).resolve().parent / "fonts/Montserrat-ExtraBoldItalic.ttf"
-WORDMARK_TRACKING = -0.035  # em; Montserrat is wide, tighten the wordmark a little
-
-LIGHT = {"bg": "#FFFFFF", "orange": "#FC8448", "green": "#5A782A", "clay": "#A4441A"}
-DARK = {"bg": "#1D1916", "orange": "#FC8448", "green": "#9BBE5C", "clay": "#F49A6A"}
-
+FONT = Path(__file__).resolve().parent / "fonts/Montserrat-ExtraBoldItalic.ttf"
 DART_OUT = ROOT / "lib/core/brand/logo_paths.g.dart"
 
-FA_SCALE = 2.0  # "fa" is twice the wordmark size
-GAP = 0.10  # space between the lines, as a share of the wordmark size
+CLAY = "#A4441A"
+CLAY_LIGHT = "#F49A6A"
+DARK_TILE = "#1D1916"
+WHITE = "#FFFFFF"
+
+FA_SHARE = 0.46  # height of "fa" as a share of the visible icon
 
 
-class Text:
-    """A run of glyphs from one font, shaped with HarfBuzz, positioned in
-    font units (y up)."""
+class Mark:
+    """"fa" shaped with HarfBuzz, in font units (y up)."""
 
-    def __init__(self, font_file, text, tracking=0.0):
-        self.font = TTFont(font_file)
-        self.glyphs = self.font.getGlyphSet()
-        self.upm = self.font["head"].unitsPerEm
-        order = self.font.getGlyphOrder()
-
-        blob = hb.Blob.from_file_path(str(font_file))
-        hb_font = hb.Font(hb.Face(blob))
+    def __init__(self):
+        font = TTFont(FONT)
+        self.glyphs = font.getGlyphSet()
+        order = font.getGlyphOrder()
         buf = hb.Buffer()
-        buf.add_str(text)
+        buf.add_str("fa")
         buf.guess_segment_properties()
-        hb.shape(hb_font, buf, {"kern": True, "liga": False})
-
-        self.names = []
-        self.xs = []
-        x = 0
+        hb.shape(hb.Font(hb.Face(hb.Blob.from_file_path(str(FONT)))), buf, {"kern": True, "liga": False})
+        self.run, x = [], 0
         for info, pos in zip(buf.glyph_infos, buf.glyph_positions):
-            self.names.append(order[info.codepoint])
-            self.xs.append(x + pos.x_offset)
-            x += pos.x_advance + tracking * self.upm
-
-    def draw(self, pen_for, transform):
-        """Draws each glyph through pen_for(index) with a final transform."""
-        a, b, c, d, e, f = transform
-        for i, name in enumerate(self.names):
-            self.glyphs[name].draw(TransformPen(pen_for(i), (a, b, c, d, e + a * self.xs[i], f)))
-
-    def bounds(self):
+            self.run.append((order[info.codepoint], x + pos.x_offset))
+            x += pos.x_advance
         pen = BoundsPen(self.glyphs)
-        self.draw(lambda _: pen, (1, 0, 0, 1, 0, 0))
-        return pen.bounds
+        self._draw(pen, (1, 0, 0, 1, 0, 0))
+        self.bounds = pen.bounds
+
+    def _draw(self, pen, t):
+        a, b, c, d, e, f = t
+        for name, gx in self.run:
+            self.glyphs[name].draw(TransformPen(pen, (a, b, c, d, e + a * gx, f)))
+
+    def aspect(self):
+        x0, y0, x1, y1 = self.bounds
+        return (x1 - x0) / (y1 - y0)
+
+    def draw(self, pen, height, left, top):
+        """Draws "fa" `height` tall with its top-left corner at (left, top),
+        y down."""
+        x0, y0, x1, y1 = self.bounds
+        k = height / (y1 - y0)
+        self._draw(pen, (k, 0, 0, -k, left - x0 * k, top + y1 * k))
+
+    def draw_centered(self, pen, height, box):
+        self.draw(pen, height, (box - height * self.aspect()) / 2, (box - height) / 2)
+
+
+MARK = Mark()
+
+
+def svg_icon(size, bg, fg, radius=0):
+    pen = SVGPathPen(MARK.glyphs)
+    MARK.draw_centered(pen, size * FA_SHARE, size)
+    return (
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}" width="{size}" height="{size}">'
+        f'<rect width="{size}" height="{size}" rx="{radius}" fill="{bg}"/>'
+        f'<path d="{pen.getCommands()}" fill="{fg}"/></svg>'
+    )
 
 
 class DartPen(BasePen):
-    """Writes glyph outlines as Flutter Path calls."""
+    """Writes outlines as Flutter Path calls."""
 
-    def __init__(self, glyphs, transform):
+    def __init__(self, glyphs):
         super().__init__(glyphs)
         self.calls = []
-        self.t = transform
 
-    def _pt(self, pt):
-        a, b, c, d, e, f = self.t
-        x, y = pt
-        return f"{a * x + c * y + e:.2f}, {b * x + d * y + f:.2f}"
+    @staticmethod
+    def _pt(pt):
+        return f"{pt[0]:.2f}, {pt[1]:.2f}"
 
     def _moveTo(self, pt):
         self.calls.append(f"p.moveTo({self._pt(pt)});")
@@ -105,121 +114,40 @@ class DartPen(BasePen):
         self.calls.append("p.close();")
 
 
-def dart_logo():
-    """Writes "fa" as Dart code starting at 0,0 for the tag beside the
-    in-app logo."""
-    k = 100
-
-    def piece(text, size, group_for):
-        t = Text(*text)
-        x0, y0, x1, y1 = t.bounds()
-        s = size / t.upm
-        groups = {}
-        for i, name in enumerate(t.names):
-            # Font units are y-up; flip and move the top-left corner to 0,0.
-            final = (s * k, 0, 0, -s * k, (s * (t.xs[i] - x0)) * k, (s * y1) * k)
-            pen = DartPen(t.glyphs, final)
-            t.glyphs[name].draw(pen)
-            groups.setdefault(group_for(i), []).extend(pen.calls)
-        return groups, ((x1 - x0) * s * k, (y1 - y0) * s * k)
-
-    fa, fa_size = piece((FA_FONT, "fa"), 1, lambda _: "fa")
-
-    out = [
-        "// Generated by scripts/app_icon/generate.py. Do not edit by hand.",
-        "",
-        "import 'dart:ui';",
-        "",
-        f"const faSize = Size({fa_size[0]:.2f}, {fa_size[1]:.2f});",
-    ]
-    for fn, calls in (("faMark", fa["fa"]),):
-        out += ["", f"void {fn}(Path p) {{"] + [f"  {c}" for c in calls] + ["}"]
-    DART_OUT.parent.mkdir(parents=True, exist_ok=True)
-    DART_OUT.write_text("\n".join(out) + "\n")
-
-
-def lockup(colors):
-    """Returns (paths, bbox) of the lockup in its own units, y down."""
-    word = Text(WORDMARK_FONT, "davaindia", WORDMARK_TRACKING)
-    fa = Text(FA_FONT, "fa")
-
-    s1 = 1 / word.upm  # wordmark at size 1
-    s2 = FA_SCALE / fa.upm
-    wx0, wy0, wx1, wy1 = word.bounds()
-    fx0, fy0, fx1, fy1 = fa.bounds()
-
-    # Wordmark baseline at y = 0. "fa" right edge matches the wordmark's,
-    # its top sits GAP below the wordmark's lowest point.
-    word_t = (s1, 0, 0, -s1, 0, 0)
-    fa_dx = wx1 * s1 - fx1 * s2
-    fa_dy = -wy0 * s1 + GAP + fy1 * s2
-    fa_t = (s2, 0, 0, -s2, fa_dx, fa_dy)
-
-    paths = []
-
-    def collect(text, t, color_for):
-        pens = {}
-
-        def pen_for(i):
-            pens[i] = SVGPathPen(text.glyphs)
-            return pens[i]
-
-        text.draw(pen_for, t)
-        for i, pen in sorted(pens.items()):
-            d = pen.getCommands()
-            if d:
-                paths.append((d, color_for(i)))
-
-    collect(word, word_t, lambda i: colors["orange"] if i < 4 else colors["green"])
-    collect(fa, fa_t, lambda _: colors["clay"])
-
-    x0 = min(wx0 * s1, fx0 * s2 + fa_dx)
-    x1 = wx1 * s1
-    y0 = -wy1 * s1
-    y1 = -fy0 * s2 + fa_dy
-    return paths, (x0, y0, x1, y1)
-
-
-def placed(colors, size, fit):
-    """Lockup scaled by fit(w, h) and centered in a size x size canvas."""
-    paths, (x0, y0, x1, y1) = lockup(colors)
-    w, h = x1 - x0, y1 - y0
-    k = fit(w, h)
-    tx = (size - w * k) / 2 - x0 * k
-    ty = (size - h * k) / 2 - y0 * k
-    return paths, f"translate({tx:.4f} {ty:.4f}) scale({k:.4f})", (k, tx, ty)
-
-
-def svg(colors, size, fit, background=True, radius=0):
-    paths, transform, _ = placed(colors, size, fit)
-    bg = ""
-    if background:
-        bg = f'<rect width="{size}" height="{size}" rx="{radius}" fill="{colors["bg"]}"/>'
-    body = "".join(f'<path d="{d}" fill="{c}"/>' for d, c in paths)
-    return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {size} {size}" width="{size}" height="{size}">'
-        f'{bg}<g transform="{transform}">{body}</g></svg>'
-    )
-
-
-def vector_drawable(colors, mono=False):
-    """Android adaptive icon layer on the 108 dp canvas. The lockup fits the
-    66 dp safe circle so no launcher mask clips it."""
-    paths, _, (k, tx, ty) = placed(colors, 108, lambda w, h: 62 / (w * w + h * h) ** 0.5)
-    items = "\n".join(
-        f'        <path android:fillColor="{"#FFFFFFFF" if mono else c}" android:pathData="{d}"/>' for d, c in paths
-    )
+def vector_drawable(color):
+    """Android adaptive icon layer on the 108 dp canvas. About 72 dp of it is
+    visible under the launcher mask; "fa" sits well inside the 66 dp safe
+    circle."""
+    pen = SVGPathPen(MARK.glyphs)
+    MARK.draw_centered(pen, 72 * FA_SHARE, 108)
     return f"""<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group android:translateX="{tx:.4f}" android:translateY="{ty:.4f}" android:scaleX="{k:.4f}" android:scaleY="{k:.4f}">
-{items}
-    </group>
+    <path android:fillColor="{color}" android:pathData="{pen.getCommands()}"/>
 </vector>
 """
+
+
+def dart_mark():
+    """Writes "fa" as Dart code, 100 units tall, top-left at 0,0."""
+    pen = DartPen(MARK.glyphs)
+    MARK.draw(pen, 100, 0, 0)
+    lines = [
+        "// Generated by scripts/app_icon/generate.py. Do not edit by hand.",
+        "",
+        "import 'dart:ui';",
+        "",
+        f"const faSize = Size({100 * MARK.aspect():.2f}, 100);",
+        "",
+        "void faMark(Path p) {",
+        *[f"  {c}" for c in pen.calls],
+        "}",
+    ]
+    DART_OUT.parent.mkdir(parents=True, exist_ok=True)
+    DART_OUT.write_text("\n".join(lines) + "\n")
 
 
 def run(*args):
@@ -237,64 +165,39 @@ def main():
     OUT.mkdir(exist_ok=True)
 
     # iOS: full-bleed square; the system applies the rounded mask.
-    ios_fit = lambda w, h: min(720 / w, 560 / h)  # noqa: E731
-    (OUT / "ios.svg").write_text(svg(LIGHT, 1024, ios_fit))
-    (OUT / "ios-dark.svg").write_text(svg(DARK, 1024, ios_fit))
+    (OUT / "ios.svg").write_text(svg_icon(1024, CLAY, WHITE))
+    (OUT / "ios-dark.svg").write_text(svg_icon(1024, DARK_TILE, CLAY_LIGHT))
     icons = ROOT / "ios/Runner/Assets.xcassets/AppIcon.appiconset"
     for old in icons.glob("*.png"):
         old.unlink()
-    png(OUT / "ios.svg", icons / "AppIcon.png", 1024, opaque=LIGHT["bg"])
-    png(OUT / "ios-dark.svg", icons / "AppIcon-Dark.png", 1024, opaque=DARK["bg"])
-    (icons / "Contents.json").write_text(
-        json.dumps(
-            {
-                "images": [
-                    {"filename": "AppIcon.png", "idiom": "universal", "platform": "ios", "size": "1024x1024"},
-                    {
-                        "appearances": [{"appearance": "luminosity", "value": "dark"}],
-                        "filename": "AppIcon-Dark.png",
-                        "idiom": "universal",
-                        "platform": "ios",
-                        "size": "1024x1024",
-                    },
-                ],
-                "info": {"author": "xcode", "version": 1},
-            },
-            indent=2,
-        )
-        + "\n"
-    )
+    png(OUT / "ios.svg", icons / "AppIcon.png", 1024, opaque=CLAY)
+    png(OUT / "ios-dark.svg", icons / "AppIcon-Dark.png", 1024, opaque=DARK_TILE)
+    image = {"idiom": "universal", "platform": "ios", "size": "1024x1024"}
+    contents = {
+        "images": [
+            {"filename": "AppIcon.png", **image},
+            {"appearances": [{"appearance": "luminosity", "value": "dark"}], "filename": "AppIcon-Dark.png", **image},
+        ],
+        "info": {"author": "xcode", "version": 1},
+    }
+    (icons / "Contents.json").write_text(json.dumps(contents, indent=2) + "\n")
 
-    # Android 8+: adaptive icon with a vector foreground and a themed layer.
+    # Android 8+: clay background, white "fa", and a themed single-colour layer.
     res = ROOT / "android/app/src/main/res"
-    (res / "drawable").mkdir(exist_ok=True)
-    (res / "drawable/ic_launcher_foreground.xml").write_text(vector_drawable(LIGHT))
-    (res / "drawable/ic_launcher_monochrome.xml").write_text(vector_drawable(LIGHT, mono=True))
-    (res / "values").mkdir(exist_ok=True)
+    (res / "drawable/ic_launcher_foreground.xml").write_text(vector_drawable(WHITE))
+    (res / "drawable/ic_launcher_monochrome.xml").write_text(vector_drawable(WHITE))
     (res / "values/ic_launcher_background.xml").write_text(
         '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n'
-        f'    <color name="ic_launcher_background">{LIGHT["bg"]}</color>\n</resources>\n'
-    )
-    (res / "mipmap-anydpi-v26").mkdir(exist_ok=True)
-    (res / "mipmap-anydpi-v26/ic_launcher.xml").write_text(
-        """<?xml version="1.0" encoding="utf-8"?>
-<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_launcher_background"/>
-    <foreground android:drawable="@drawable/ic_launcher_foreground"/>
-    <monochrome android:drawable="@drawable/ic_launcher_monochrome"/>
-</adaptive-icon>
-"""
+        f'    <color name="ic_launcher_background">{CLAY}</color>\n</resources>\n'
     )
 
-    # Android 7: plain PNGs on a rounded white square.
-    legacy_fit = lambda w, h: min(330 / w, 250 / h)  # noqa: E731
-    (OUT / "android-legacy.svg").write_text(svg(LIGHT, 432, legacy_fit, radius=96))
+    # Android 7: round PNGs.
+    (OUT / "android-legacy.svg").write_text(svg_icon(432, CLAY, WHITE, radius=216))
     for folder, px in {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}.items():
         png(OUT / "android-legacy.svg", res / f"mipmap-{folder}/ic_launcher.png", px)
 
-    dart_logo()
+    dart_mark()
 
-    # Previews for checking by eye.
     png(OUT / "ios.svg", OUT / "preview-ios.png", 512)
     png(OUT / "ios-dark.svg", OUT / "preview-ios-dark.png", 512)
     print("Icons written. Previews in", OUT)

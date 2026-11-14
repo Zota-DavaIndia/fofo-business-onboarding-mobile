@@ -67,3 +67,4 @@ ios/Runner/GeneratedPluginRegistrant.*
 
 # Icon generator previews
 /scripts/app_icon/out/
+__pycache__/
