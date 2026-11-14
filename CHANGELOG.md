@@ -4,6 +4,26 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- Lead page shows every field the CRM does (stage and time in it, campaign, RCM and territory, calls made, consent, timeline, all sources) and a map of the lead and the proposed store with directions.
+- My day on Home: start and end the working day with GPS; the route is recorded in the background while the day runs and synced in batches.
+- Expenses and Leave, opened from Home: claims with receipts submitted for approval, leave requests with days taken this year.
+- Day plan: pick today's live stores and leads, see them numbered on a map with directions, and open each one.
+- Store visits: check in at a live store with GPS, raise tickets while there, and check out with a summary and feedback.
+- Tickets: raise a store's product, billing software, dispatch or accounts problem with a photo, and follow the CRM's updates.
+- Calendar: a month with every visit, callback, follow-up, planned day, leave and your own scheduled activities; activities can be tied to a lead.
+- Live alerts: while the app is open it checks for new alerts every 15 seconds, refreshes only what each one touched, and shows a toast that opens it. The customer screen does the same for updates on their application.
+- Push notifications, built in and switched off until the Firebase settings are added: the phone registers after sign-in, a tapped push opens the right screen, and signing out stops pushes to that phone.
+- In-app updates on Android: the app checks GitHub Releases at launch and every 6 hours, opens the update screen once for each new release and keeps offering it on Home and Profile. The APK downloads with progress, is checked against the release's SHA-256 and handed to the installer, asking once for permission to install.
+- Google Maps in the app, with the key kept out of git and passed to release builds from a repository secret.
+
+### Changed
+
+- Coordinates come only from the phone's GPS: the store pin on check-in is where you stand, never picked by hand.
+- The Day plan, Calendar, Tickets, Expenses and Leave tiles on Home are one sideways row that fades at the edge with more to scroll.
+- Messages show as the app's own toast at the top of the screen (success, error or info, announced to screen readers) instead of the system snackbar.
+
 ## [1.0.0] - 2026-11-14
 
 ### Added

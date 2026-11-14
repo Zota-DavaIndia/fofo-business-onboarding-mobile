@@ -41,13 +41,21 @@ Built so far:
 - Leads: search by name, mobile or lead number, filter by status, and open a lead to see contact details, the call centre's notes, shop details, onboarding progress and the timeline.
 - Lead actions: call, log a call, add a note, change status or close with a reason, edit details, reassign, and add a walk-in lead. Each shows only when the user's permissions and the lead's state allow it.
 - Visits: today, upcoming and done lists; schedule, reschedule and cancel; check in with GPS distance to the shop, mock-location detection, a photo and the site assessment; check out as qualified, follow-up, not qualified or dropped.
+- Lead page with everything the CRM shows: stage and time in it, source and campaign, RCM and territory, calls made, consent, timeline, all sources, and a map of the lead and the proposed store with directions in Google Maps.
+- My day: start and end the working day with a real GPS fix (mock locations refused); while it runs the route is recorded, in the background too, and sent in batches that wait out a lost connection.
+- Expenses: claims by station (HQ, Ex-HQ, Outstation) and type, travel mode and km, receipt photo above a set amount; drafts are edited, then submitted for the manager's approval.
+- Leave: casual, sick, earned or unpaid, half days, days taken this year, and cancelling before it starts.
+- Day plan with a map of today's stores and leads; store check-in and check-out with a summary; store tickets followed to resolution; a calendar of visits, callbacks, follow-ups, plans, leave and scheduled activities.
+- Coordinates only ever come from the phone's GPS; there are no typed or hand-picked locations.
+- Live alerts while the app is open: a 15-second check refreshes what a new alert touched and shows a toast that opens it. Push notifications for a closed app are built in and turn on with the Firebase settings below.
+- Updates on Android: the app checks GitHub Releases at launch and every 6 hours. When a newer release is out it opens the update screen once for that version (Home and Profile keep offering it); the app downloads the APK, checks its SHA-256 against the release and opens the installer.
 - Profile tab with contact details, app version, a copyable device ID and sign out.
 - Light and dark themes that follow the phone setting.
 - Custom icon set drawn from SVG sources, with no icon font or SVG library.
 - Launcher icon: davaindia with an italic "ff" (field force) under it on clay. Inside the app, the logo is the official davaindia icon and word, with "FIELD FORCE" in clay caps under the word. Both built by `scripts/app_icon/generate.py`.
 - Montserrat, bundled with the app.
 
-Planned next: push notifications, the in-app updater that installs new versions from GitHub Releases, and field force tools (expenses, leave, start and end of day, tickets, day plan).
+Planned next: store sales reports once the ERP is connected.
 
 ## Download
 
@@ -84,6 +92,10 @@ Set `API_BASE_URL` in `env/local.json`, then:
 flutter run --dart-define-from-file=env/local.json
 ```
 
+Maps use a Google Maps key that stays out of git: put `MAPS_API_KEY = …` in `ios/Flutter/Secrets.xcconfig` and `MAPS_API_KEY=…` in `android/local.properties`, and add `"MAPS_ENABLED": true` to your env file. Without it, map cards fall back to an "open in Google Maps" link. Release builds read the `MAPS_API_KEY` repository secret.
+
+Push notifications use Firebase without config files: pass `FIREBASE_API_KEY`, `FIREBASE_PROJECT_ID`, `FIREBASE_SENDER_ID` and `FIREBASE_ANDROID_APP_ID` (and `FIREBASE_IOS_APP_ID`) as dart-defines, or the repository secrets of the same names for releases. Without them push stays off. iOS push also needs the Push Notifications capability and an APNs key in Firebase.
+
 Check the code:
 
 ```bash
@@ -111,7 +123,7 @@ Android builds are made only by GitHub Actions.
 1. Bump `version` in `pubspec.yaml`, for example `1.1.0+2`.
 2. Merge to `main`.
 
-The release workflow then tests, builds and signs the APK, checks the signature, tags `v1.1.0` and publishes the APK, `version.json` and `SHA256SUMS`. It needs these repository settings:
+The release workflow then tests, builds and signs the APK, checks the signature, tags `v1.1.0` and publishes the APK, `version.json` and `SHA256SUMS`. Installed apps read `version.json` to find the update; the build number is passed as `APP_BUILD`, so a rebuild of the same version is offered too. It needs these repository settings:
 
 | Name | Kind | Purpose |
 |---|---|---|
@@ -119,6 +131,8 @@ The release workflow then tests, builds and signs the APK, checks the signature,
 | `ANDROID_KEYSTORE_PASSWORD` | secret | Keystore password |
 | `ANDROID_KEY_ALIAS` | secret | Key alias |
 | `ANDROID_KEY_PASSWORD` | secret | Key password |
+| `FIREBASE_API_KEY`, `FIREBASE_PROJECT_ID`, `FIREBASE_SENDER_ID`, `FIREBASE_ANDROID_APP_ID` | secrets | Firebase project for push notifications. Without them, releases have no push and rely on live alerts while open |
+| `MAPS_API_KEY` | secret | Google Maps key for the in-app maps. Without it, release builds show "open in Google Maps" links instead |
 | `API_BASE_URL` | variable | Production CRM API address baked into release builds. Until it's set, releases use the staging API from `env/staging.json` |
 
 ## Project structure

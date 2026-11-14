@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/app_theme.dart';
 import 'router.dart';
+import '../features/update/update_screen.dart';
 
 class FieldApp extends ConsumerWidget {
   const FieldApp({super.key});
@@ -16,6 +17,8 @@ class FieldApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
       routerConfig: ref.watch(routerProvider),
+      builder: (context, child) =>
+          UpdateWatcher(navigatorKey: rootNavigatorKey, child: child ?? const SizedBox.shrink()),
     );
   }
 }

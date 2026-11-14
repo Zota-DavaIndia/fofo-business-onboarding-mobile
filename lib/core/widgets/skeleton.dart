@@ -200,8 +200,12 @@ class SkeletonLabel extends StatelessWidget {
   final double width;
 
   @override
+  // Aligned so a list that stretches its children doesn't widen the bar to the full row.
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(top: Space.sm, bottom: Space.xs),
-    child: Bone(width: width, height: 10),
+    child: Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Bone(width: width, height: 10),
+    ),
   );
 }

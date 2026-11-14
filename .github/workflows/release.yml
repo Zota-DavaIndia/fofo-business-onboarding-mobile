@@ -93,10 +93,23 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+          # Push stays off until these Firebase secrets exist; the app then uses its live alert check.
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_SENDER_ID: ${{ secrets.FIREBASE_SENDER_ID }}
+          FIREBASE_ANDROID_APP_ID: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
         run: |
+          maps=false; [ -n "$MAPS_API_KEY" ] && maps=true
           flutter build apk --release \
+            --dart-define=MAPS_ENABLED=$maps \
+            --dart-define=FIREBASE_API_KEY="$FIREBASE_API_KEY" \
+            --dart-define=FIREBASE_PROJECT_ID="$FIREBASE_PROJECT_ID" \
+            --dart-define=FIREBASE_SENDER_ID="$FIREBASE_SENDER_ID" \
+            --dart-define=FIREBASE_ANDROID_APP_ID="$FIREBASE_ANDROID_APP_ID" \
             --dart-define=APP_ENV=${{ steps.version.outputs.env }} \
             --dart-define=APP_VERSION=${{ steps.version.outputs.name }} \
+            --dart-define=APP_BUILD=${{ steps.version.outputs.build }} \
             --dart-define=API_BASE_URL=${{ steps.version.outputs.api }}
 
       - name: Verify signature

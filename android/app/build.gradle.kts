@@ -24,6 +24,12 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Google Maps key: MAPS_API_KEY in CI, or MAPS_API_KEY in local.properties. Empty leaves maps blank.
+        val localProps = Properties().apply {
+            val f = rootProject.file("local.properties")
+            if (f.exists()) f.inputStream().use { load(it) }
+        }
+        manifestPlaceholders["mapsApiKey"] = System.getenv("MAPS_API_KEY") ?: localProps.getProperty("MAPS_API_KEY") ?: ""
     }
 
     // Release signing comes from environment variables in CI, or from
@@ -72,4 +78,9 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // FileProvider, for handing downloaded updates to the system installer
+    implementation("androidx.core:core-ktx:1.13.1")
 }

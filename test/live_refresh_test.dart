@@ -20,6 +20,7 @@ Widget _app(AppUser? user, {Widget? child}) => ProviderScope(
   overrides: [sessionProvider.overrideWith(() => _FakeSession(user))],
   child: MaterialApp(
     home: LiveRefresh(
+      pulseEvery: null,
       interval: const Duration(seconds: 10),
       child: child ?? Consumer(builder: (_, ref, _) => Text('${ref.watch(liveSignalProvider(LiveTopic.dashboard))}')),
     ),

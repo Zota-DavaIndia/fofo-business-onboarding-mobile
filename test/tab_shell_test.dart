@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/widgets.dart' show Size;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fofo_onboarding/app/app.dart';
 import 'package:fofo_onboarding/core/auth/session.dart';
 import 'package:fofo_onboarding/core/auth/user.dart';
+import 'package:fofo_onboarding/core/update/update.dart';
 import 'package:fofo_onboarding/features/alerts/alerts.dart';
 import 'package:fofo_onboarding/features/home/dashboard.dart';
 import 'package:fofo_onboarding/features/leads/lead.dart';
@@ -79,6 +81,7 @@ Future<void> _pump(WidgetTester tester, AppUser? user) async {
           }),
         ),
         alertsProvider.overrideWith((ref) async => (items: const <Alert>[], unread: 0)),
+        availableUpdateProvider.overrideWith((ref) async => null),
       ],
       child: const FieldApp(),
     ),
@@ -132,6 +135,11 @@ void main() {
   });
 
   testWidgets('a Needs attention row opens Leads on its queue', (tester) async {
+    // A phone-sized screen, so the row sits above the tab bar.
+    tester.view
+      ..physicalSize = const Size(1170, 2532)
+      ..devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
     await _pump(tester, _user(['leads.view', 'dashboard.view']));
     await tester.tap(find.text('Visits overdue'));
     await tester.pumpAndSettle();

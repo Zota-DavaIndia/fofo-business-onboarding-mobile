@@ -42,6 +42,14 @@ class Lead {
     this.longitude,
     this.assignedTo,
     this.storeLocation,
+    this.stage,
+    this.statusChangedAt,
+    this.callAttempts,
+    this.maxCallAttempts,
+    this.territory,
+    this.closeReason,
+    this.sources = const [],
+    this.lastVisit,
   });
 
   final int id;
@@ -82,6 +90,18 @@ class Lead {
 
   /// Where the store is proposed to open, from the site visit.
   final StoreLocation? storeLocation;
+
+  /// Lead-to-billing stage number (1–3 for leads).
+  final int? stage;
+  final DateTime? statusChangedAt;
+  final int? callAttempts;
+  final int? maxCallAttempts;
+  final String? territory;
+  final String? closeReason;
+
+  /// Every enquiry that reached this lead, newest first.
+  final List<LeadSource> sources;
+  final LastVisit? lastVisit;
 
   bool allows(String action) => allowedActions.contains(action);
 
@@ -131,6 +151,52 @@ class Lead {
     storeLocation: j['store_location'] is Map<String, dynamic>
         ? StoreLocation.fromJson(j['store_location'] as Map<String, dynamic>)
         : null,
+    stage: (j['stage'] as num?)?.toInt(),
+    statusChangedAt: date(j['status_changed_at']),
+    callAttempts: (j['call_attempts'] as num?)?.toInt(),
+    maxCallAttempts: (j['max_call_attempts'] as num?)?.toInt(),
+    territory: j['territory'] is Map ? str((j['territory'] as Map)['name']) : null,
+    closeReason: str(j['close_reason']),
+    sources: [
+      for (final s in (j['sources'] as List? ?? const []))
+        if (s is Map<String, dynamic>) LeadSource.fromJson(s),
+    ],
+    lastVisit: j['last_visit'] is Map<String, dynamic>
+        ? LastVisit.fromJson(j['last_visit'] as Map<String, dynamic>)
+        : null,
+  );
+}
+
+/// One enquiry that reached the lead (a known mobile adds a source instead of a new lead).
+class LeadSource {
+  const LeadSource({required this.label, this.campaign, this.at});
+
+  final String label;
+  final String? campaign;
+  final DateTime? at;
+
+  factory LeadSource.fromJson(Map<String, dynamic> j) => LeadSource(
+    label: str(j['source_label']) ?? str(j['source']) ?? 'Unknown',
+    campaign: str(j['campaign']),
+    at: date(j['captured_at']),
+  );
+}
+
+class LastVisit {
+  const LastVisit({required this.status, this.geoVerified = false, this.distanceM, this.outcome, this.at});
+
+  final String status;
+  final bool geoVerified;
+  final int? distanceM;
+  final String? outcome;
+  final DateTime? at;
+
+  factory LastVisit.fromJson(Map<String, dynamic> j) => LastVisit(
+    status: '${j['status'] ?? ''}',
+    geoVerified: j['geo_verified'] == true,
+    distanceM: (j['distance_m'] as num?)?.toInt(),
+    outcome: str(j['outcome']),
+    at: date(j['scheduled_at']) ?? date(j['created_at']),
   );
 }
 

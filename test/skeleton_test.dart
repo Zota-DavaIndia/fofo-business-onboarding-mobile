@@ -33,4 +33,14 @@ void main() {
     final still = tester.widget<FadeTransition>(_fade).opacity.value;
     expect(still, 1);
   });
+
+  testWidgets('a section label bar keeps its width in a list', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(body: ListView(children: const [SkeletonLabel(width: 56)])),
+      ),
+    );
+    expect(tester.getSize(find.byType(Bone)).width, 56);
+  });
 }

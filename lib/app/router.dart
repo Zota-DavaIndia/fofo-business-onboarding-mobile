@@ -11,6 +11,9 @@ import '../features/tracking/track_session.dart';
 import 'modules.dart';
 import 'tab_shell.dart';
 
+/// The app's top navigator, for screens opened from outside a route (the update prompt).
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = ValueNotifier(0);
   ref.listen(sessionProvider, (_, _) => refresh.value++);
@@ -18,6 +21,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     refreshListenable: refresh,
     redirect: (context, state) {

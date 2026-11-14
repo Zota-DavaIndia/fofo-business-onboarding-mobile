@@ -25,6 +25,7 @@ abstract final class AppIcons {
   static const home = AppIconData(_home);
   static const id = AppIconData(_id);
   static const leads = AppIconData(_leads);
+  static const leave = AppIconData(_leave);
   static const left = AppIconData(_left);
   static const locate = AppIconData(_locate);
   static const lock = AppIconData(_lock);
@@ -33,7 +34,9 @@ abstract final class AppIcons {
   static const navigate = AppIconData(_navigate);
   static const phone = AppIconData(_phone);
   static const plus = AppIconData(_plus);
+  static const receipt = AppIconData(_receipt);
   static const right = AppIconData(_right);
+  static const route = AppIconData(_route);
   static const rupee = AppIconData(_rupee);
   static const search = AppIconData(_search);
   static const share = AppIconData(_share);
@@ -65,6 +68,7 @@ abstract final class AppIcons {
     'home': home,
     'id': id,
     'leads': leads,
+    'leave': leave,
     'left': left,
     'locate': locate,
     'lock': lock,
@@ -73,7 +77,9 @@ abstract final class AppIcons {
     'navigate': navigate,
     'phone': phone,
     'plus': plus,
+    'receipt': receipt,
     'right': right,
+    'route': route,
     'rupee': rupee,
     'search': search,
     'share': share,
@@ -281,6 +287,20 @@ void _leads(Path p) {
   p.cubicTo(18.3, 14.4, 20, 15.9, 20.5, 18.5);
 }
 
+void _leave(Path p) {
+  p.addRRect(RRect.fromRectAndRadius(Rect.fromLTWH(4, 5, 16, 16), const Radius.circular(2)));
+  p.moveTo(16, 3);
+  p.lineTo(16, 7);
+  p.moveTo(8, 3);
+  p.lineTo(8, 7);
+  p.moveTo(4, 11);
+  p.lineTo(20, 11);
+  p.moveTo(10, 14);
+  p.lineTo(14, 18);
+  p.moveTo(14, 14);
+  p.lineTo(10, 18);
+}
+
 void _left(Path p) {
   p.moveTo(14, 6);
   p.lineTo(8, 12);
@@ -356,10 +376,38 @@ void _plus(Path p) {
   p.lineTo(19, 12);
 }
 
+void _receipt(Path p) {
+  p.moveTo(6, 3);
+  p.lineTo(18, 3);
+  p.lineTo(18, 21);
+  p.lineTo(15, 19);
+  p.lineTo(12, 21);
+  p.lineTo(9, 19);
+  p.lineTo(6, 21);
+  p.close();
+  p.moveTo(9, 8);
+  p.lineTo(15, 8);
+  p.moveTo(9, 12);
+  p.lineTo(15, 12);
+  p.moveTo(9, 16);
+  p.lineTo(12, 16);
+}
+
 void _right(Path p) {
   p.moveTo(10, 6);
   p.lineTo(16, 12);
   p.lineTo(10, 18);
+}
+
+void _route(Path p) {
+  p.addOval(Rect.fromCircle(center: Offset(6, 19), radius: 2));
+  p.addOval(Rect.fromCircle(center: Offset(18, 5), radius: 2));
+  p.moveTo(12, 19);
+  p.lineTo(16.5, 19);
+  p.arcToPoint(Offset(16.5, 12), radius: const Radius.circular(3.5), clockwise: false);
+  p.lineTo(7.5, 12);
+  p.arcToPoint(Offset(7.5, 5), radius: const Radius.circular(3.5), clockwise: true);
+  p.lineTo(12, 5);
 }
 
 void _rupee(Path p) {

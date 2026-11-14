@@ -12,6 +12,7 @@ import '../../core/widgets/partner_code.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/submit.dart';
 import '../../core/widgets/widgets.dart';
+import '../field/calendar_screen.dart';
 import '../visits/visit_forms.dart';
 import 'lead.dart';
 import 'lead_form_screen.dart';
@@ -31,6 +32,8 @@ Future<void> showLeadActions(BuildContext context, WidgetRef ref, Lead lead) {
     if (lead.allows(LeadAction.scheduleVisit) && can(Perm.visitsManage))
       (AppIcons.calendar, 'Schedule a visit', ScheduleVisitScreen(lead: lead), false),
     if (lead.allows(LeadAction.addNote)) (AppIcons.chat, 'Add a note', AddNoteScreen(lead: lead), false),
+    if (can(Perm.dayplanManage))
+      (AppIcons.clock, 'Schedule an activity', ActivityFormScreen(leadId: lead.id, leadName: lead.name), false),
     if (lead.allows(LeadAction.changeStatus) && can(Perm.leadsStatus) && lead.nextStatuses.isNotEmpty)
       (AppIcons.sync, 'Change status', ChangeStatusScreen(lead: lead), false),
     if (can(Perm.leadsUpdate)) (AppIcons.doc, 'Edit details', LeadFormScreen(lead: lead), false),

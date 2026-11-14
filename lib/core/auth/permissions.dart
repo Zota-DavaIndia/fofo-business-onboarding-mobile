@@ -13,6 +13,11 @@ abstract final class Perm {
   static const onboardingVerifyPartner = 'onboarding.verify_partner';
   static const paymentsRecord = 'payments.record';
   static const dashboardView = 'dashboard.view';
+  static const attendanceMark = 'attendance.mark';
+  static const expensesClaim = 'expenses.claim';
+  static const leaveApply = 'leave.apply';
+  static const dayplanManage = 'dayplan.manage';
+  static const ticketsRaise = 'tickets.raise';
 }
 
 /// Used only while `/auth/me` has no `permissions` field. Roles are set up

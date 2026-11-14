@@ -18,4 +18,7 @@ abstract final class Env {
   static const appVersion = String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
 
   static const isProduction = appEnv == 'production';
+
+  /// True when the build has a Google Maps key (MAPS_API_KEY); otherwise maps fall back to a link.
+  static const mapsEnabled = bool.fromEnvironment('MAPS_ENABLED');
 }

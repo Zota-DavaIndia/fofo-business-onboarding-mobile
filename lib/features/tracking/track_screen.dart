@@ -16,6 +16,8 @@ import 'customer_profile_screen.dart';
 import 'partner_forms.dart';
 import 'track.dart';
 import 'track_session.dart';
+import '../../core/widgets/toast.dart';
+import '../../core/sync/alert_pulse.dart';
 
 /// Read-only journey of a franchise enquiry, for the person who made it.
 /// Everything shown comes from `/partner/track`.
@@ -27,11 +29,49 @@ class TrackScreen extends ConsumerStatefulWidget {
 }
 
 class _TrackScreenState extends ConsumerState<TrackScreen> {
+  late final AppLifecycleListener _lifecycle;
+
+  /// Live check while the screen is open: a decision on a step shows within seconds.
+  late final AlertPulse _pulse = AlertPulse(
+    fetch: (after) async {
+      final res = await ref
+          .read(trackApiProvider)
+          .get<Map<String, dynamic>>('/partner/notifications/pulse', query: {'after': ?after});
+      return res.data;
+    },
+    onNew: (items, unread) {
+      if (!mounted) return;
+      _refresh();
+      ref.read(partnerRevisionProvider.notifier).bump();
+      ref.invalidate(customerInboxProvider);
+      if (items.isEmpty) return;
+      final last = items.last;
+      final body = last['body'] as String?;
+      showToast(
+        context,
+        items.length > 1
+            ? '${items.length} new updates'
+            : [last['title'] ?? 'New update', if (body != null && body.isNotEmpty) body].join('\n'),
+        duration: const Duration(seconds: 5),
+        onTap: () => pushForm<void>(context, const CustomerInboxScreen()),
+      );
+    },
+  );
+
   @override
   void initState() {
     super.initState();
     // The docs ask for a fresh read whenever the screen opens.
     WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
+    _lifecycle = AppLifecycleListener(onResume: _pulse.start, onPause: _pulse.stop, onHide: _pulse.stop);
+    _pulse.start();
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    _pulse.stop();
+    super.dispose();
   }
 
   Future<void> _refresh() async {
@@ -267,7 +307,7 @@ class _ContactRow extends StatelessWidget {
               semanticLabel: 'Copy number',
               onTap: () {
                 Clipboard.setData(ClipboardData(text: p));
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Number copied')));
+                showToast(context, 'Number copied', kind: ToastKind.success);
               },
             ),
     );

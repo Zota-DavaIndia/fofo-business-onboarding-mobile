@@ -15,6 +15,7 @@ import '../../core/widgets/submit.dart';
 import '../../core/widgets/widgets.dart';
 import '../leads/lead.dart';
 import 'visit.dart';
+import '../../core/widgets/toast.dart';
 
 /// Schedule a visit for [lead], or move [visit] to a new time.
 class ScheduleVisitScreen extends ConsumerStatefulWidget {
@@ -218,6 +219,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> with FormSubmit {
   /// The proposed store is where the phone is now. Off when the store will
   /// be somewhere else; its pin then stays as it was.
   bool _storeHere = true;
+
   final _clientId = newClientId();
   String? _localError;
 
@@ -271,14 +273,12 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> with FormSubmit {
       if (file != null && mounted) setState(() => _photo = file);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            source == ImageSource.camera
-                ? "Couldn't open the camera. Choose a photo instead."
-                : "Couldn't open your photos.",
-          ),
-        ),
+      showToast(
+        context,
+        source == ImageSource.camera
+            ? "Couldn't open the camera. Choose a photo instead."
+            : "Couldn't open your photos.",
+        kind: ToastKind.error,
       );
     }
   }
@@ -323,6 +323,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> with FormSubmit {
           'store_address': ?t(_storeAddress),
           'store_landmark': ?t(_storeLandmark),
           'store_pincode': ?t(_storePincode),
+          // The store pin is only ever the phone's real position.
           if (_storeHere) ...{'store_latitude': p.latitude, 'store_longitude': p.longitude},
         },
       );

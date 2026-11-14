@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
 import 'page.dart';
 import 'widgets.dart';
+import 'toast.dart';
 
 /// Opens a full-screen form above the tabs. Resolves to what the form
 /// pops with, usually `true` after a save.
@@ -337,10 +338,10 @@ class SheetBody extends StatelessWidget {
 /// covers the rest.
 void showSaveError(BuildContext context, Object error) {
   final message = error is ApiException ? error.message : 'Something went wrong. Try again.';
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  showToast(context, message, kind: ToastKind.error);
 }
 
 /// Snack bar confirming a save.
 void showSaved(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  showToast(context, message, kind: ToastKind.success);
 }

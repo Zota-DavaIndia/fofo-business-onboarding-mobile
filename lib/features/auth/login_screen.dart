@@ -14,6 +14,7 @@ import '../../core/theme/tokens.dart';
 import '../../core/widgets/page.dart';
 import '../../core/widgets/widgets.dart';
 import '../tracking/track_session.dart';
+import '../../core/widgets/toast.dart';
 
 enum _Step { identify, password, otp }
 
@@ -136,7 +137,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await _run(() async {
       await ref.read(trackSessionProvider.notifier).resend(_loginId!.value);
       _startResendTimer();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Code sent again')));
+      if (mounted) showToast(context, 'Code sent again', kind: ToastKind.success);
     });
   }
 
@@ -314,7 +315,7 @@ class _DeviceBlocked extends StatelessWidget {
                 semanticLabel: 'Copy device ID',
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: deviceId));
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Device ID copied')));
+                  showToast(context, 'Device ID copied', kind: ToastKind.success);
                 },
               ),
             ),

@@ -15,6 +15,9 @@ import '../../core/widgets/page.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/widgets.dart';
 import '../alerts/alerts.dart';
+import '../field/field.dart';
+import '../field/my_day_card.dart';
+import '../field/plan.dart';
 import '../leads/lead.dart';
 import '../leads/lead_status.dart';
 import '../leads/leads_board.dart';
@@ -22,6 +25,7 @@ import '../onboarding/onboarding.dart';
 import '../onboarding/onboarding_board.dart';
 import 'dashboard.dart';
 import 'stat_card.dart';
+import '../update/update_screen.dart';
 
 /// Opens the list behind an attention row or a tile.
 void openTarget(BuildContext context, WidgetRef ref, HomeTarget target, {String? label}) {
@@ -54,6 +58,11 @@ class HomeScreen extends ConsumerWidget {
     return PageBody(
       onRefresh: () async {
         ref.invalidate(alertsProvider);
+        ref.invalidate(todayProvider);
+        ref.invalidate(expensesProvider);
+        ref.invalidate(leavesProvider);
+        ref.invalidate(dayPlanProvider);
+        ref.invalidate(ticketsProvider);
         if (canSeeCounts) {
           ref.invalidate(dashboardProvider);
           await ref.read(dashboardProvider.future);
@@ -78,6 +87,13 @@ class HomeScreen extends ConsumerWidget {
             ),
           ],
         ),
+        const UpdateBanner(),
+        if (user.can(Perm.attendanceMark)) const MyDayCard(),
+        if (user.can(Perm.expensesClaim) ||
+            user.can(Perm.leaveApply) ||
+            user.can(Perm.dayplanManage) ||
+            user.can(Perm.ticketsRaise))
+          const WorkTiles(),
         if (dashboard?.hasError ?? false)
           AppCard(child: Text("Couldn't load your numbers. Pull down to retry.", style: context.text.secondary)),
         if (loading)

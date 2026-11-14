@@ -7,6 +7,8 @@ import '../core/icons/app_icon.dart';
 import '../core/sync/live_refresh.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/tokens.dart';
+import '../core/widgets/toast.dart';
+import '../features/alerts/open_alert.dart';
 import 'modules.dart';
 
 /// Hosts the tab screens and the solid bottom tab bar. Only tabs the user
@@ -25,6 +27,22 @@ class TabShell extends ConsumerWidget {
     ];
 
     return LiveRefresh(
+      onAlerts: (context, items) {
+        // One toast for the newest alert; several at once point to the inbox.
+        final last = items.last;
+        final many = items.length > 1;
+        final title = many ? '${items.length} new alerts' : '${last['title'] ?? 'New alert'}';
+        final body = many ? null : last['body'] as String?;
+        showToast(
+          context,
+          body == null || body.isEmpty ? title : '$title\n$body',
+          duration: const Duration(seconds: 5),
+          onTap: () => many
+              ? context.push('/alerts')
+              : openAlert(context, entity: last['entity'] as String?, entityId: (last['entity_id'] as num?)?.toInt()),
+        );
+      },
+      onOpenPush: (context, entity, id) => openAlert(context, entity: entity, entityId: id),
       child: Scaffold(
         body: shell,
         bottomNavigationBar: ColoredBox(

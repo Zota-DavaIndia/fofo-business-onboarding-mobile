@@ -10,6 +10,7 @@ import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
 import 'form.dart';
 import 'widgets.dart';
+import 'toast.dart';
 
 /// A file chosen on the phone, not yet uploaded.
 class PickedFile {
@@ -45,12 +46,10 @@ Future<PickedFile?> pickFile(BuildContext context, {bool allowPdf = true, bool c
     return x == null ? null : PickedFile(x.path, x.name);
   } catch (_) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            source == 'camera' ? "Couldn't open the camera. Choose a photo instead." : "Couldn't open that.",
-          ),
-        ),
+      showToast(
+        context,
+        source == 'camera' ? "Couldn't open the camera. Choose a photo instead." : "Couldn't open that.",
+        kind: ToastKind.error,
       );
     }
     return null;

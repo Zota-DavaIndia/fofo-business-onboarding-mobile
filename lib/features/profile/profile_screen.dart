@@ -11,6 +11,9 @@ import '../../core/widgets/form.dart';
 import '../../core/widgets/page.dart';
 import '../../core/widgets/widgets.dart';
 import 'change_password_screen.dart';
+import '../../core/widgets/toast.dart';
+import '../../core/update/update.dart';
+import '../update/update_screen.dart';
 
 final _deviceIdProvider = FutureProvider.autoDispose<String>((ref) => ref.watch(secureStoreProvider).deviceId());
 
@@ -64,7 +67,17 @@ class ProfileScreen extends ConsumerWidget {
         const SectionLabel('This phone'),
         GroupedList(
           children: [
-            ListRow(title: Env.appVersion, subtitle: 'App version'),
+            if (ref.watch(availableUpdateProvider).value case final r?)
+              ListRow(
+                title: Env.appVersion,
+                subtitle: 'App version · ${r.version} is ready',
+                trailing: TextLink(
+                  label: 'Update',
+                  onTap: () => pushForm<void>(context, UpdateScreen(release: r)),
+                ),
+              )
+            else
+              ListRow(title: Env.appVersion, subtitle: 'App version'),
             ListRow(
               title: deviceId,
               subtitle: 'Device ID',
@@ -73,7 +86,7 @@ class ProfileScreen extends ConsumerWidget {
                 semanticLabel: 'Copy device ID',
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: deviceId));
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Device ID copied')));
+                  showToast(context, 'Device ID copied', kind: ToastKind.success);
                 },
               ),
             ),

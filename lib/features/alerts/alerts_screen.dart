@@ -10,6 +10,7 @@ import '../../core/widgets/page.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/widgets.dart';
 import 'alerts.dart';
+import 'open_alert.dart';
 
 /// The staff inbox: new assignments, approvals, rejections, payments.
 class AlertsScreen extends ConsumerWidget {
@@ -101,7 +102,10 @@ class AlertsScreen extends ConsumerWidget {
                           ),
                           onTap: () async {
                             if (!a.read) await markAlertRead(ref, a.id);
-                            if (a.route case final r? when context.mounted) context.go(r);
+                            if (context.mounted &&
+                                (a.route != null || const {'ticket', 'expense', 'leave'}.contains(a.entity))) {
+                              openAlert(context, entity: a.entity, entityId: a.entityId);
+                            }
                           },
                         ),
                     ],

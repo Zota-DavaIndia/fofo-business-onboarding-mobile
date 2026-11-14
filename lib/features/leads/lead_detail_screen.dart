@@ -11,6 +11,7 @@ import '../../core/icons/app_icon.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
 import '../../core/widgets/form.dart';
+import '../../core/widgets/map_view.dart';
 import '../../core/widgets/page.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/widgets.dart';
@@ -19,6 +20,7 @@ import '../visits/visit_forms.dart';
 import 'lead.dart';
 import 'lead_actions.dart';
 import 'lead_status.dart';
+import '../../core/widgets/toast.dart';
 
 class LeadDetailScreen extends ConsumerWidget {
   const LeadDetailScreen({super.key, required this.id});
@@ -70,9 +72,14 @@ class LeadDetailScreen extends ConsumerWidget {
 
   List<Widget> _content(BuildContext context, WidgetRef ref, Lead l, {Visit? open, Visit? next}) {
     final details = <(String, String)>[
-      if (l.sourceLabel != null) ('Source', l.sourceLabel!),
+      if (l.sourceLabel != null) ('Source', [l.sourceLabel!, ?l.campaign].join(' · ')),
+      if (l.assignedTo != null) ('RCM', [l.assignedTo!, ?l.territory].join(' · ')),
+      if (l.callAttempts != null)
+        ('Calls', l.maxCallAttempts == null ? '${l.callAttempts}' : '${l.callAttempts} of ${l.maxCallAttempts}'),
+      if (l.consent != null) ('Consent', l.consent! ? 'Yes' : 'No'),
       if (l.enquiryAt != null) ('Enquired', formatDate(l.enquiryAt!)),
-      if (l.pincode != null || l.city != null) ('Location', [l.pincode, l.city].whereType<String>().join(' · ')),
+      if (l.pincode != null || l.city != null || l.state != null)
+        ('Location', [l.city, l.state, l.pincode].whereType<String>().where((s) => s.isNotEmpty).join(', ')),
       if (l.address != null) ('Address', l.address!),
       if (l.storeLocation?.summary case final store? when store.isNotEmpty) ('Proposed store', store),
       if (l.shopOwnership != null || l.shopAreaSqft != null)
@@ -84,6 +91,8 @@ class LeadDetailScreen extends ConsumerWidget {
           ].join(' · '),
         ),
       if (l.investmentReady != null) ('Investment ready', _cap(l.investmentReady!)),
+      if (l.timeline != null) ('Timeline', _cap(l.timeline!.replaceAll('_', ' '))),
+      if (l.closeReason != null) ('Close reason', _cap(l.closeReason!.replaceAll('_', ' '))),
       if (l.nextVisitAt != null) ('Next visit', formatDate(l.nextVisitAt!)),
       if (l.nextCallAt != null) ('Next call', formatDate(l.nextCallAt!)),
     ];
@@ -98,6 +107,14 @@ class LeadDetailScreen extends ConsumerWidget {
               children: [
                 Text(l.name, style: context.text.heading),
                 Text(l.subtitle, style: context.text.label),
+                if (l.stage != null || l.statusChangedAt != null)
+                  Text(
+                    [
+                      if (l.stage != null) 'Stage ${l.stage.toString().padLeft(2, '0')}',
+                      if (l.statusChangedAt != null) 'since ${formatDate(l.statusChangedAt!)}',
+                    ].join(' · '),
+                    style: context.text.label,
+                  ),
               ],
             ),
           ),
@@ -142,9 +159,19 @@ class LeadDetailScreen extends ConsumerWidget {
           children: [for (final (k, v) in details) _InfoRow(label: k, value: v)],
         ),
       ],
+      if (_pins(l) case final pins when pins.isNotEmpty) ...[const SectionLabel('On the map'), MapCard(pins: pins)],
       if (l.notes != null) ...[
         const SectionLabel('Notes'),
         AppCard(child: Text(l.notes!, style: context.text.secondary)),
+      ],
+      if (l.sources.isNotEmpty) ...[
+        SectionLabel(l.sources.length == 1 ? 'Source' : 'Sources (${l.sources.length})'),
+        GroupedList(
+          children: [
+            for (final s in l.sources)
+              ListRow(title: s.label, subtitle: [?s.campaign, if (s.at != null) formatDate(s.at!)].join(' · ')),
+          ],
+        ),
       ],
       if (l.onboarding case final o?) ...[
         SectionLabel(
@@ -369,6 +396,23 @@ class _NextVisitCard extends ConsumerWidget {
 
 String _cap(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
+/// The lead's own pin (from the enquiry or the first check-in) and the proposed store.
+List<MapPin> _pins(Lead l) {
+  final store = l.storeLocation;
+  return [
+    if (l.latitude != null && l.longitude != null)
+      MapPin(l.latitude!, l.longitude!, label: 'Lead location', note: l.address),
+    if (store?.latitude != null && store?.longitude != null)
+      MapPin(
+        store!.latitude!,
+        store.longitude!,
+        label: 'Proposed store',
+        note: store.summary.isEmpty ? null : store.summary,
+        tone: PinTone.info,
+      ),
+  ];
+}
+
 class _InfoRow extends StatelessWidget {
   const _InfoRow({required this.label, required this.value});
 
@@ -414,7 +458,7 @@ class _CopyRow extends StatelessWidget {
         semanticLabel: 'Copy $label',
         onTap: () {
           Clipboard.setData(ClipboardData(text: value));
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$label copied')));
+          showToast(context, '$label copied', kind: ToastKind.success);
         },
       ),
     );

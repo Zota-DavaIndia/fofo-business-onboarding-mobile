@@ -1,0 +1,288 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../core/config/env.dart';
+import '../../core/icons/app_icon.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/theme/tokens.dart';
+import '../../core/update/update.dart';
+import '../../core/widgets/form.dart';
+import '../../core/widgets/page.dart';
+import '../../core/widgets/widgets.dart';
+
+/// Download, check and install a release.
+class UpdateScreen extends ConsumerStatefulWidget {
+  const UpdateScreen({super.key, this.release});
+
+  final Release? release;
+
+  @override
+  ConsumerState<UpdateScreen> createState() => _UpdateScreenState();
+}
+
+class _UpdateScreenState extends ConsumerState<UpdateScreen> with WidgetsBindingObserver {
+  double? _progress;
+  String? _error;
+  String? _apk;
+  bool _needsPermission = false;
+  CancelToken? _cancel;
+
+  Release? get _release => widget.release ?? ref.watch(availableUpdateProvider).value;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cancel?.cancel();
+    super.dispose();
+  }
+
+  /// Back from the "install unknown apps" setting: carry on if it was allowed.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _needsPermission && _apk != null) _install();
+  }
+
+  Future<void> _start() async {
+    final r = _release;
+    if (r == null) return;
+    setState(() {
+      _error = null;
+      _progress = 0;
+    });
+    _cancel = CancelToken();
+    try {
+      _apk = await Updater.download(
+        r,
+        cancel: _cancel,
+        onProgress: (p) => mounted ? setState(() => _progress = p) : null,
+      );
+      await _install();
+    } on UpdateException catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.message;
+          _progress = null;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _error = "Couldn't download the update. Check your connection and try again.";
+          _progress = null;
+        });
+      }
+    }
+  }
+
+  Future<void> _install() async {
+    final apk = _apk;
+    if (apk == null) return;
+    if (!await Updater.canInstall()) {
+      if (mounted) setState(() => _needsPermission = true);
+      return;
+    }
+    if (mounted) setState(() => _needsPermission = false);
+    try {
+      await Updater.install(apk);
+    } catch (_) {
+      if (mounted) setState(() => _error = "Couldn't open the installer. Try again.");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final r = _release;
+    final c = context.colors;
+    final downloading = _progress != null && _apk == null;
+    final ready = _apk != null;
+    return PageBody(
+      header: PageHeader('Update the app', onBack: () => Navigator.of(context).maybePop()),
+      bottom: r == null
+          ? null
+          : ActionBar(
+              children: [
+                if (_needsPermission)
+                  AppButton(label: 'Allow installs', icon: AppIcons.shield, onPressed: Updater.openInstallSettings)
+                else
+                  AppButton(
+                    label: ready ? 'Install' : (downloading ? 'Downloading…' : 'Download and install'),
+                    icon: ready ? AppIcons.check : AppIcons.download,
+                    loading: downloading,
+                    onPressed: downloading ? null : (ready ? _install : _start),
+                  ),
+              ],
+            ),
+      children: [
+        Text('A new version of Davaindia Field Force is ready.', style: context.text.secondary),
+        if (r != null)
+          GroupedList(
+            children: [
+              ListRow(title: r.version, subtitle: 'New version'),
+              ListRow(title: Env.appVersion, subtitle: 'This phone'),
+              if (r.sizeLabel != null) ListRow(title: r.sizeLabel!, subtitle: 'Download'),
+            ],
+          )
+        else
+          MessageBlock(
+            icon: AppIcons.download,
+            title: 'Get the latest version',
+            body: 'Open the download page and install the latest APK.',
+            action: AppButton(
+              label: 'Open download page',
+              kind: ButtonKind.secondary,
+              onPressed: () => launchUrl(
+                Uri.parse('https://github.com/Zota-DavaIndia/fofo-business-onboarding-mobile/releases/latest'),
+                mode: LaunchMode.externalApplication,
+              ),
+            ),
+          ),
+        if (downloading) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(Radii.badge),
+            child: LinearProgressIndicator(
+              value: _progress == 0 ? null : _progress,
+              minHeight: 8,
+              color: c.accent,
+              backgroundColor: c.accentTint,
+            ),
+          ),
+          Text(_progress == 0 ? 'Starting…' : '${((_progress ?? 0) * 100).round()}%', style: context.text.label),
+        ],
+        if (_needsPermission)
+          AppCard(
+            child: Text(
+              'Android asks once before an app can install updates. Tap Allow installs, turn on "Allow from this source", then come back.',
+              style: context.text.secondary,
+            ),
+          ),
+        if (ready && !_needsPermission)
+          Text('Downloaded and checked. Android will ask you to confirm the install.', style: context.text.label),
+        if (_error != null) Text(_error!, style: context.text.label.copyWith(color: c.danger)),
+      ],
+    );
+  }
+}
+
+/// "Version X is ready" on Home, until the user updates or dismisses it for that version.
+class UpdateBanner extends ConsumerWidget {
+  const UpdateBanner({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final r = ref.watch(availableUpdateProvider).value;
+    final dismissed = ref.watch(_dismissedProvider);
+    if (r == null || dismissed == r.version) return const SizedBox.shrink();
+    final c = context.colors;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => pushForm<void>(context, UpdateScreen(release: r)),
+      child: AppCard(
+        child: Row(
+          children: [
+            IconTile(AppIcons.download, color: c.accent, background: c.accentTint, size: 36, iconSize: 18),
+            const SizedBox(width: Space.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Version ${r.version} is ready', style: context.text.bodyStrong),
+                  Text('Tap to update${r.sizeLabel == null ? '' : ' · ${r.sizeLabel}'}', style: context.text.label),
+                ],
+              ),
+            ),
+            IconTile(
+              AppIcons.close,
+              semanticLabel: 'Not now',
+              size: 36,
+              iconSize: 16,
+              onTap: () => ref.read(_dismissedProvider.notifier).set(r.version),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+final _dismissedProvider = NotifierProvider<_Dismissed, String?>(_Dismissed.new);
+
+class _Dismissed extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void set(String? v) => state = v;
+}
+
+/// Checks GitHub Releases at launch and every [every] after, and opens [UpdateScreen] once per new release.
+/// Timers stop while the phone sleeps the app, so a resume past the interval checks again.
+class UpdateWatcher extends ConsumerStatefulWidget {
+  const UpdateWatcher({super.key, required this.navigatorKey, required this.child, this.every = checkEvery});
+
+  static const checkEvery = Duration(hours: 6);
+
+  final GlobalKey<NavigatorState> navigatorKey;
+  final Duration every;
+  final Widget child;
+
+  @override
+  ConsumerState<UpdateWatcher> createState() => _UpdateWatcherState();
+}
+
+class _UpdateWatcherState extends ConsumerState<UpdateWatcher> with WidgetsBindingObserver {
+  Timer? _timer;
+  DateTime? _lastCheck;
+  String? _offered;
+  bool _open = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (!selfUpdates) return;
+    WidgetsBinding.instance.addObserver(this);
+    _timer = Timer.periodic(widget.every, (_) => _check());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final last = _lastCheck;
+    if (state == AppLifecycleState.resumed && (last == null || DateTime.now().difference(last) >= widget.every)) {
+      _check();
+    }
+  }
+
+  Future<void> _check() async {
+    _lastCheck = DateTime.now();
+    ref.invalidate(availableUpdateProvider);
+    final r = await ref.read(availableUpdateProvider.future);
+    if (!mounted || r == null || _open) return;
+    final key = '${r.version}+${r.build}';
+    if (_offered == key) return;
+    final nav = widget.navigatorKey.currentState;
+    if (nav == null) return;
+    _offered = key;
+    _open = true;
+    await nav.push<void>(MaterialPageRoute(builder: (_) => UpdateScreen(release: r)));
+    _open = false;
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
