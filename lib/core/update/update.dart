@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -44,6 +45,23 @@ int compareVersions(String a, String b) {
   return 0;
 }
 
+/// Reads `version.json`. GitHub serves release files as `application/octet-stream`, so Dio hands over
+/// text (or bytes) rather than a decoded map; anything that isn't a release object gives null.
+Release? releaseFrom(Object? data) {
+  try {
+    final decoded = switch (data) {
+      final String text => jsonDecode(text),
+      final List<int> bytes => jsonDecode(utf8.decode(bytes)),
+      _ => data,
+    };
+    return decoded is Map<String, dynamic> && decoded['version'] != null && decoded['apk_url'] != null
+        ? Release.fromJson(decoded)
+        : null;
+  } on FormatException {
+    return null;
+  }
+}
+
 /// True when [r] is newer than the running app.
 bool isNewer(Release r, {String current = Env.appVersion, int currentBuild = appBuild}) {
   final c = compareVersions(r.version, current);
@@ -57,12 +75,15 @@ bool get selfUpdates => !kIsWeb && defaultTargetPlatform == TargetPlatform.andro
 final availableUpdateProvider = FutureProvider<Release?>((ref) async {
   if (!selfUpdates) return null;
   try {
-    final res = await Dio(BaseOptions(connectTimeout: const Duration(seconds: 10))).get<dynamic>(Env.releasesUrl);
-    final data = res.data;
-    final j = data is Map<String, dynamic> ? data : null;
-    if (j == null) return null;
-    final r = Release.fromJson(j);
-    return isNewer(r) ? r : null;
+    final res = await Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 15),
+        responseType: ResponseType.plain,
+      ),
+    ).get<String>(Env.releasesUrl);
+    final r = releaseFrom(res.data);
+    return r != null && isNewer(r) ? r : null;
   } catch (_) {
     return null; // offline or no release yet
   }
@@ -79,6 +100,9 @@ class Updater {
   /// Download progress from 0 to 1 while a download runs, else null.
   static final progress = ValueNotifier<double?>(null);
 
+  /// The checked APK once a download has finished, so screens can offer Install straight away.
+  static final ready = ValueNotifier<({Release release, String path})?>(null);
+
   /// Whether Android lets this app install packages; false until the user allows it once.
   static Future<bool> canInstall() async => await _channel.invokeMethod<bool>('canInstall') ?? false;
 
@@ -94,7 +118,7 @@ class Updater {
     final f = _download(r);
     _pending = f;
     f.then(
-      (_) {},
+      (path) => ready.value = (release: r, path: path),
       onError: (_) {
         if (identical(_pending, f)) _pending = null; // let the next call try again
       },

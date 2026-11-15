@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-11-15
+
+### Fixed
+
+- The app never found new versions: GitHub serves `version.json` as a binary download, which the check read as "no update". Versions before 1.1.4 can't update themselves; install 1.1.4 from the release page once.
+
+### Added
+
+- The app version on Profile shows the update's state: Update when a new version is out, a ring with the download percentage, then Install. The Home banner shows the same.
+
 ## [1.1.3] - 2026-11-15
 
 ### Fixed

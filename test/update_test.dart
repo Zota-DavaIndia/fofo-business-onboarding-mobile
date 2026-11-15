@@ -34,6 +34,48 @@ void main() {
     expect(r.build, 2);
   });
 
+  test('version.json is read from the text GitHub serves (application/octet-stream)', () {
+    const text = '{"version": "1.1.3", "build": 5, "apk_url": "https://example.test/app.apk", "size": 100}';
+    expect(releaseFrom(text)?.version, '1.1.3');
+    expect(releaseFrom(text.codeUnits)?.build, 5);
+    expect(releaseFrom({'version': '1.1.3', 'apk_url': 'x'})?.version, '1.1.3');
+    expect(releaseFrom('<html>Not Found</html>'), isNull);
+    expect(releaseFrom('{"message": "x"}'), isNull);
+    expect(releaseFrom(null), isNull);
+  });
+
+  testWidgets('the version row shows Update, then the download percentage, then Install', (tester) async {
+    const r = Release(version: '9.0.0', build: 1, apkUrl: 'https://example.com/app.apk');
+    Future<void> pump() => tester.pumpWidget(
+      ProviderScope(
+        overrides: [availableUpdateProvider.overrideWith((ref) async => r)],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const Scaffold(body: AppVersionRow()),
+        ),
+      ),
+    );
+    addTearDown(() {
+      Updater.progress.value = null;
+      Updater.ready.value = null;
+    });
+    await pump();
+    await tester.pump();
+    expect(find.text('App version · 9.0.0 is available'), findsOneWidget);
+    expect(find.text('Update ›'), findsOneWidget);
+
+    Updater.progress.value = 0.45;
+    await tester.pump();
+    expect(find.text('45%'), findsOneWidget);
+    expect(find.text('App version · downloading 9.0.0'), findsOneWidget);
+
+    Updater.progress.value = null;
+    Updater.ready.value = (release: r, path: '/tmp/app.apk');
+    await tester.pump();
+    expect(find.text('Install ›'), findsOneWidget);
+    expect(find.text('App version · 9.0.0 downloaded'), findsOneWidget);
+  });
+
   testWidgets('the watcher offers each new release once and checks again on its interval', (tester) async {
     var latest = '9.0.0';
     var checks = 0;

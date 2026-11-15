@@ -31,7 +31,15 @@ class UpdateScreen extends ConsumerStatefulWidget {
 
 class _UpdateScreenState extends ConsumerState<UpdateScreen> with WidgetsBindingObserver {
   String? _error;
-  late String? _apk = widget.apk;
+  late String? _apk = widget.apk ?? _downloaded(widget.release);
+
+  static String? _downloaded(Release? r) {
+    final done = Updater.ready.value;
+    return r != null && done != null && done.release.version == r.version && done.release.build == r.build
+        ? done.path
+        : null;
+  }
+
   bool _needsPermission = false;
   bool _starting = false;
 
@@ -179,6 +187,87 @@ class _UpdateScreenState extends ConsumerState<UpdateScreen> with WidgetsBinding
   }
 }
 
+/// The app version on Profile, with the update's state on the right: Update when a new version is out,
+/// a ring with the percentage while it downloads, Install once it's downloaded and checked.
+class AppVersionRow extends ConsumerWidget {
+  const AppVersionRow({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final r = ref.watch(availableUpdateProvider).value;
+    if (r == null) return const ListRow(title: Env.appVersion, subtitle: 'App version');
+    return ListenableBuilder(
+      listenable: Listenable.merge([Updater.progress, Updater.ready]),
+      builder: (context, _) {
+        final progress = Updater.progress.value;
+        final done = Updater.ready.value;
+        final apk = done != null && done.release.version == r.version && done.release.build == r.build
+            ? done.path
+            : null;
+        void open() => pushForm<void>(context, UpdateScreen(release: r, apk: apk));
+        return ListRow(
+          title: Env.appVersion,
+          subtitle: apk != null
+              ? 'App version · ${r.version} downloaded'
+              : progress != null
+              ? 'App version · downloading ${r.version}'
+              : 'App version · ${r.version} is available',
+          onTap: open,
+          trailing: apk != null
+              ? TextLink(label: 'Install', onTap: open)
+              : progress != null
+              ? DownloadProgress(progress)
+              : TextLink(label: 'Update', onTap: open),
+        );
+      },
+    );
+  }
+}
+
+/// A small ring around a download arrow that fills as the download runs, with the percentage beside it.
+class DownloadProgress extends StatelessWidget {
+  const DownloadProgress(this.progress, {super.key});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final pct = (progress * 100).round();
+    return Semantics(
+      label: 'Downloading, $pct percent',
+      excludeSemantics: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$pct%',
+            style: context.text.label.copyWith(color: c.accent, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(width: Space.sm),
+          SizedBox.square(
+            dimension: 24,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox.expand(
+                  child: CircularProgressIndicator(
+                    value: progress == 0 ? null : progress,
+                    strokeWidth: 2.5,
+                    color: c.accent,
+                    backgroundColor: c.accentTint,
+                  ),
+                ),
+                AppIcon(AppIcons.download, size: 12, color: c.accent),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// "Version X is ready" on Home, until the user updates or dismisses it for that version.
 class UpdateBanner extends ConsumerWidget {
   const UpdateBanner({super.key});
@@ -191,7 +280,7 @@ class UpdateBanner extends ConsumerWidget {
     final c = context.colors;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => pushForm<void>(context, UpdateScreen(release: r)),
+      onTap: () => pushForm<void>(context, UpdateScreen(release: r, apk: _UpdateScreenState._downloaded(r))),
       child: AppCard(
         child: Row(
           children: [
@@ -202,7 +291,18 @@ class UpdateBanner extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('Version ${r.version} is ready', style: context.text.bodyStrong),
-                  Text('Tap to update${r.sizeLabel == null ? '' : ' · ${r.sizeLabel}'}', style: context.text.label),
+                  ListenableBuilder(
+                    listenable: Listenable.merge([Updater.progress, Updater.ready]),
+                    builder: (context, _) {
+                      final p = Updater.progress.value;
+                      final text = Updater.ready.value?.release.version == r.version
+                          ? 'Downloaded · tap to install'
+                          : p != null
+                          ? 'Downloading · ${(p * 100).round()}%'
+                          : 'Tap to update${r.sizeLabel == null ? '' : ' · ${r.sizeLabel}'}';
+                      return Text(text, style: context.text.label);
+                    },
+                  ),
                 ],
               ),
             ),

@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/session.dart';
-import '../../core/config/env.dart';
 import '../../core/icons/app_icon.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/tokens.dart';
@@ -12,7 +11,6 @@ import '../../core/widgets/page.dart';
 import '../../core/widgets/widgets.dart';
 import 'change_password_screen.dart';
 import '../../core/widgets/toast.dart';
-import '../../core/update/update.dart';
 import '../update/update_screen.dart';
 
 final _deviceIdProvider = FutureProvider.autoDispose<String>((ref) => ref.watch(secureStoreProvider).deviceId());
@@ -67,17 +65,7 @@ class ProfileScreen extends ConsumerWidget {
         const SectionLabel('This phone'),
         GroupedList(
           children: [
-            if (ref.watch(availableUpdateProvider).value case final r?)
-              ListRow(
-                title: Env.appVersion,
-                subtitle: 'App version · ${r.version} is ready',
-                trailing: TextLink(
-                  label: 'Update',
-                  onTap: () => pushForm<void>(context, UpdateScreen(release: r)),
-                ),
-              )
-            else
-              ListRow(title: Env.appVersion, subtitle: 'App version'),
+            const AppVersionRow(),
             ListRow(
               title: deviceId,
               subtitle: 'Device ID',
