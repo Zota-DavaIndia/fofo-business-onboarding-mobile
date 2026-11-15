@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.6] - 2026-11-15
+
+### Fixed
+
+- Push notifications that arrived after Android had stopped the app in the background were dropped. Android now sets up Firebase when a push wakes the app, so they show.
+
 ## [1.1.5] - 2026-11-15
 
 ### Added

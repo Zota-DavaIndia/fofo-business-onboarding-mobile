@@ -65,7 +65,14 @@ class PushService {
   Future<void> start() async {
     if (!PushConfig.enabled || _ready) return;
     try {
-      if (Firebase.apps.isEmpty) await Firebase.initializeApp(options: PushConfig.options);
+      if (Firebase.apps.isEmpty) {
+        try {
+          await Firebase.initializeApp(options: PushConfig.options);
+        } on FirebaseException catch (e) {
+          // Android may already have set Firebase up from the build's resources (see android/app/build.gradle.kts).
+          if (e.code != 'duplicate-app') rethrow;
+        }
+      }
       final fm = FirebaseMessaging.instance;
       await fm.requestPermission();
       _ready = true;

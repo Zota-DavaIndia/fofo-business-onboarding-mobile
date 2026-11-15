@@ -30,6 +30,18 @@ android {
             if (f.exists()) f.inputStream().use { load(it) }
         }
         manifestPlaceholders["mapsApiKey"] = System.getenv("MAPS_API_KEY") ?: localProps.getProperty("MAPS_API_KEY") ?: ""
+
+        // Firebase for pushes that arrive while the app isn't running. These are the resources the Google
+        // Services plugin writes from google-services.json; with them Android sets up Firebase when a push
+        // wakes the app, so the notification still shows. Same FIREBASE_* values as the Dart side, from the
+        // environment in CI or local.properties; without them pushes only reach a running app.
+        fun firebase(name: String): String = System.getenv(name) ?: localProps.getProperty(name) ?: ""
+        if (firebase("FIREBASE_ANDROID_APP_ID").isNotEmpty()) {
+            resValue("string", "google_app_id", firebase("FIREBASE_ANDROID_APP_ID"))
+            resValue("string", "gcm_defaultSenderId", firebase("FIREBASE_SENDER_ID"))
+            resValue("string", "google_api_key", firebase("FIREBASE_API_KEY"))
+            resValue("string", "project_id", firebase("FIREBASE_PROJECT_ID"))
+        }
     }
 
     // Release signing comes from environment variables in CI, or from
