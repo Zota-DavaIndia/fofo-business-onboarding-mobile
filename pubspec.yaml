@@ -1,7 +1,7 @@
 name: fofo_onboarding
 description: Field onboarding app for Dava India FOFO and COCO stores.
 publish_to: 'none'
-version: 1.2.2+14
+version: 1.2.3+15
 
 environment:
   sdk: ^3.14.0
