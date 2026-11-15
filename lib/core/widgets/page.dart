@@ -58,6 +58,7 @@ class PageBody extends StatelessWidget {
                 ],
               ),
       ),
+      // ActionBar rides up on top of the keyboard itself (see there).
       bottomNavigationBar: bottom,
     );
   }

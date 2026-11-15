@@ -292,6 +292,8 @@ class AppField extends StatelessWidget {
           const SizedBox(height: Space.xs),
         ],
         TextField(
+          // When focus scrolls the field into view, keep its label (above it) visible too.
+          scrollPadding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
           controller: controller,
           obscureText: obscure,
           keyboardType: keyboardType,
@@ -465,6 +467,24 @@ class MessageBlock extends StatelessWidget {
 }
 
 /// Solid bar pinned to the bottom of a screen for its main actions.
+/// The fill and edge of bars pinned to the bottom (the tab bar, a form's button bar): solid, with a
+/// semi-transparent hairline and a soft, wide shadow above, like iOS's tab bar, so content scrolling
+/// underneath stays separate. Dark mode darkens above the bar, since a light shadow wouldn't show.
+BoxDecoration bottomBarDecoration(BuildContext context) {
+  final c = context.colors;
+  final dark = Theme.of(context).brightness == Brightness.dark;
+  return BoxDecoration(
+    color: c.card,
+    border: Border(top: BorderSide(color: c.separator)),
+    boxShadow: dark
+        ? const [BoxShadow(color: Color(0x59000000), blurRadius: 18, offset: Offset(0, -6))]
+        : const [
+            BoxShadow(color: Color(0x0F1E1915), blurRadius: 18, offset: Offset(0, -6)),
+            BoxShadow(color: Color(0x0A1E1915), blurRadius: 3, offset: Offset(0, -1)),
+          ],
+  );
+}
+
 /// Space under the last control of a bottom bar. iOS's home indicator strip is see-through, so the inset
 /// alone leaves room. Android's 3-button bar is often painted solid, so the gap goes on top of the inset
 /// or the buttons look glued to it.
@@ -483,12 +503,15 @@ class ActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: context.colors.card,
+    return DecoratedBox(
+      decoration: bottomBarDecoration(context),
       child: Surface(
         level: SurfaceLevel.card,
+        // While the keyboard is open the bar grows by its height, so Save or Sign in sits right on top of
+        // it (Scaffold would leave the bar pinned behind the keyboard), and the bar's own fill runs
+        // down behind the keyboard's rounded corners instead of the page colour.
         child: Padding(
-          padding: EdgeInsets.only(bottom: bottomBarGap(context)),
+          padding: EdgeInsets.only(bottom: bottomBarGap(context) + MediaQuery.viewInsetsOf(context).bottom),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(Space.screen, Space.lg, Space.screen, 0),
             child: Column(

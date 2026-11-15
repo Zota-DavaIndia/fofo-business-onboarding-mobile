@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-15
+
+### Changed
+
+- Bottom bars (the tab bar and form buttons) have a soft shadow and a faint hairline, so content scrolling underneath stays separate.
+- The splash is the logo on the page colour with three pulsing dots; the phone's launch screen uses the same colour.
+
+### Fixed
+
+- The keyboard covered the form's button (Sign in, Save, Add lead). The button now sits on top of the keyboard, and a focused field keeps its label in view.
+- On Android 14 and older the status bar had a grey band over the app; it's now transparent with icons that match the theme.
+
 ## [1.1.0] - 2026-11-15
 
 ### Added

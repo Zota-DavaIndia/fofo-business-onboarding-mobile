@@ -38,9 +38,9 @@ CLAY_LIGHT = "#F49A6A"
 DARK_TILE = "#1D1916"
 WHITE = "#FFFFFF"
 
-# Launch screen colour: the top of the Flutter splash gradient (light clay).
-SPLASH = "#F8E6DC"
-SPLASH_DARK = "#3A2519"
+# Launch screen colour: the app's page colour, which the Flutter splash continues.
+SPLASH = "#F6F3EF"
+SPLASH_DARK = "#14110E"
 
 # Layout as shares of the visible icon: lettering width, "ff" height, gap.
 WORD_SHARE = 0.64
@@ -135,8 +135,8 @@ def svg_foreground(word):
 
 
 def splash():
-    """Native launch screens: just the splash's light clay (no mark), which the
-    Flutter splash continues with its gradient and the in-app logo."""
+    """Native launch screens: just the page colour (no mark), which the Flutter
+    splash continues with the in-app logo."""
     assets = ROOT / "ios/Runner/Assets.xcassets"
     # The old "ff" launch image; the storyboard now shows only the colour.
     shutil.rmtree(assets / "LaunchMark.imageset", ignore_errors=True)

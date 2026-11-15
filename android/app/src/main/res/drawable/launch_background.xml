@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Launch screen for Android 7 to 11: the splash's light clay, which the Flutter splash then continues. -->
+<!-- Launch screen for Android 7 to 11: the page colour, which the Flutter splash continues. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
 </layer-list>

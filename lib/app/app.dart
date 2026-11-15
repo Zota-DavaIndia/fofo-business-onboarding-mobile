@@ -19,19 +19,24 @@ class FieldApp extends ConsumerWidget {
       themeMode: ThemeMode.system,
       routerConfig: ref.watch(routerProvider),
       builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
-        value: _navigationBar(context),
+        value: _systemBars(context),
         child: UpdateWatcher(navigatorKey: rootNavigatorKey, child: child ?? const SizedBox.shrink()),
       ),
     );
   }
 }
 
-/// Android's navigation bar: see-through where Android allows it, so the app's own bottom bar colour runs
-/// behind the system buttons instead of a black strip; the card colour on older Android that ignores
-/// transparency. Icons follow the theme so they stay visible.
-SystemUiOverlayStyle _navigationBar(BuildContext context) {
+/// The system bars. Status bar: transparent, so the page colour runs behind the clock (Flutter would
+/// otherwise put a 25% black band there on Android 14 and older), with icons that suit the theme.
+/// Navigation bar: see-through where Android allows it, so the app's own bottom bar colour runs behind
+/// the system buttons instead of a black strip; the card colour on older Android that ignores transparency.
+SystemUiOverlayStyle _systemBars(BuildContext context) {
   final dark = Theme.of(context).brightness == Brightness.dark;
   return SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+    statusBarBrightness: dark ? Brightness.dark : Brightness.light, // iOS: the background, not the icons
+    systemStatusBarContrastEnforced: false,
     systemNavigationBarColor: context.colors.card,
     systemNavigationBarDividerColor: Colors.transparent,
     systemNavigationBarContrastEnforced: false,

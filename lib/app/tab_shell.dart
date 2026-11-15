@@ -9,6 +9,7 @@ import '../core/theme/app_theme.dart';
 import '../core/theme/tokens.dart';
 import '../core/widgets/toast.dart';
 import '../features/alerts/open_alert.dart';
+import '../core/widgets/widgets.dart';
 import 'modules.dart';
 
 /// Hosts the tab screens and the solid bottom tab bar. Only tabs the user
@@ -47,8 +48,8 @@ class TabShell extends ConsumerWidget {
       onOpenPush: (context, entity, id) => openAlert(context, entity: entity, entityId: id),
       child: Scaffold(
         body: shell,
-        bottomNavigationBar: ColoredBox(
-          color: context.colors.card,
+        bottomNavigationBar: DecoratedBox(
+          decoration: bottomBarDecoration(context),
           child: SafeArea(
             top: false,
             child: ConstrainedBox(
