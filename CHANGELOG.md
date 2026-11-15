@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.9] - 2026-11-15
+
+### Fixed
+
+- The franchise fee screen could show "Left to pay ₹0" and hide "I have paid" when the server sent no balance. The app now works out what is left from the total and what has been received.
+
 ## [1.1.8] - 2026-11-15
 
 ### Changed

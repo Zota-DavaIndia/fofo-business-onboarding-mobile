@@ -218,19 +218,24 @@ class Fee {
   final String? ifsc;
   final String? bank;
 
-  factory Fee.fromJson(Map<String, dynamic> j) => Fee(
-    amount: _num(j['amount'] ?? j['fee']) ?? 0,
-    gst: _num(j['gst']) ?? 0,
-    total: _num(j['total'] ?? j['amount_due']) ?? 0,
-    paidVerified: _num(j['paid_verified']) ?? 0,
-    paidPending: _num(j['paid_pending']) ?? 0,
-    balance: _num(j['balance']) ?? 0,
-    required: j['payment_required'] != false,
-    beneficiary: str(j['beneficiary']),
-    accountNo: str(j['account_no']),
-    ifsc: str(j['ifsc']),
-    bank: str(j['bank']),
-  );
+  factory Fee.fromJson(Map<String, dynamic> j) {
+    final total = _num(j['total'] ?? j['amount_due']) ?? 0;
+    final verified = _num(j['paid_verified']) ?? 0;
+    return Fee(
+      amount: _num(j['amount'] ?? j['fee']) ?? 0,
+      gst: _num(j['gst']) ?? 0,
+      total: total,
+      paidVerified: verified,
+      paidPending: _num(j['paid_pending']) ?? 0,
+      // An older server sends no balance: work it out rather than show nothing left to pay.
+      balance: _num(j['balance']) ?? (total - verified).clamp(0, double.infinity).toDouble(),
+      required: j['payment_required'] != false,
+      beneficiary: str(j['beneficiary']),
+      accountNo: str(j['account_no']),
+      ifsc: str(j['ifsc']),
+      bank: str(j['bank']),
+    );
+  }
 }
 
 /// One offline transfer of the franchise fee.
