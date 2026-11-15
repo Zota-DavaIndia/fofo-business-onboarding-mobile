@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+
+- The payment forms ask for "Paid from account no." (optional, the last 4 digits are enough) and "Paid from bank", each on its own full-width line, instead of "From account" and "Bank" side by side.
+
 ## [1.2.2] - 2026-11-15
 
 ### Fixed

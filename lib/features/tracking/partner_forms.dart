@@ -713,23 +713,13 @@ class _PartnerReportPaymentState extends ConsumerState<PartnerReportPaymentScree
           hint: 'Account holder name',
           textCapitalization: TextCapitalization.words,
         ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: AppField(
-                controller: _account,
-                label: 'From account',
-                hint: 'Optional',
-                keyboardType: TextInputType.number,
-              ),
-            ),
-            const SizedBox(width: Space.md),
-            Expanded(
-              child: AppField(controller: _bank, label: 'Bank', hint: 'Optional'),
-            ),
-          ],
+        AppField(
+          controller: _account,
+          label: 'Paid from account no.',
+          hint: 'Optional · last 4 digits are enough',
+          keyboardType: TextInputType.number,
         ),
+        AppField(controller: _bank, label: 'Paid from bank', hint: 'Optional'),
         FileSlot(
           label: 'Payment advice or screenshot',
           file: _proof,

@@ -1025,29 +1025,19 @@ class _RecordPaymentState extends ConsumerState<RecordPaymentScreen> with FormSu
           textCapitalization: TextCapitalization.words,
           errorText: _err['payer_name'] ?? fieldError('payer_name'),
         ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: AppField(
-                controller: _account,
-                label: 'From account',
-                hint: _p?.payerAccountMasked ?? 'Optional',
-                keyboardType: TextInputType.number,
-                errorText: fieldError('payer_account'),
-              ),
-            ),
-            const SizedBox(width: Space.md),
-            Expanded(
-              child: AppField(
-                controller: _bank,
-                label: 'Bank',
-                hint: 'Optional',
-                textCapitalization: TextCapitalization.words,
-                errorText: fieldError('payer_bank'),
-              ),
-            ),
-          ],
+        AppField(
+          controller: _account,
+          label: 'Paid from account no.',
+          hint: _p?.payerAccountMasked ?? 'Optional · last 4 digits are enough',
+          keyboardType: TextInputType.number,
+          errorText: fieldError('payer_account'),
+        ),
+        AppField(
+          controller: _bank,
+          label: 'Paid from bank',
+          hint: 'Optional',
+          textCapitalization: TextCapitalization.words,
+          errorText: fieldError('payer_bank'),
         ),
         FileSlot(
           label: 'Payment advice or screenshot',
