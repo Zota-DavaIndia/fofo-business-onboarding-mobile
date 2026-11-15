@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-15
+
+### Fixed
+
+- Tapping an alert about a lead that has since moved to another RCM showed an error. It now says where the lead went ("This lead is now with Bhanu."), and the earlier alerts about it are marked read.
+- A lead or onboarding that isn't yours any more says so, instead of "Couldn't load… check your connection".
+
+### Changed
+
+- A check-in that isn't verified says why: outside the lead's area, too far from the shop, waiting for the office to confirm the site location, or no usable GPS.
+
 ## [1.2.0] - 2026-11-15
 
 ### Added

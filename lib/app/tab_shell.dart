@@ -42,7 +42,9 @@ class TabShell extends ConsumerWidget {
           duration: const Duration(seconds: 5),
           onTap: () => many
               ? context.push('/alerts')
-              : openAlert(context, entity: last['entity'] as String?, entityId: (last['entity_id'] as num?)?.toInt()),
+              : last['can_open'] == true
+              ? openAlert(context, entity: last['entity'] as String?, entityId: (last['entity_id'] as num?)?.toInt())
+              : showToast(context, '${last['note'] ?? "This isn't yours to open any more."}'),
         );
       },
       onOpenPush: (context, entity, id) => openAlert(context, entity: entity, entityId: id),

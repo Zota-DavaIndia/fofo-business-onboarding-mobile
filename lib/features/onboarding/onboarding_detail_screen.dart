@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/network/api_client.dart';
 import '../../core/auth/permissions.dart';
 import '../../core/auth/session.dart';
 import '../../core/format.dart';
@@ -74,20 +75,24 @@ class OnboardingDetailScreen extends ConsumerWidget {
           ),
         ],
       ),
-      error: (_, _) => PageBody(
+      error: (e, _) => PageBody(
         children: [
           back,
           const SizedBox(height: Space.xl),
-          MessageBlock(
-            icon: AppIcons.alert,
-            title: "Couldn't load this onboarding",
-            body: 'Check your connection and try again.',
-            action: AppButton(
-              label: 'Try again',
-              kind: ButtonKind.secondary,
-              onPressed: () => ref.invalidate(onboardingProvider(id)),
+          // Moved to someone else (or gone): say so, with nothing to retry.
+          if (e is ApiException && e.isNoAccess)
+            MessageBlock(icon: AppIcons.alert, title: "This onboarding isn't yours to open", body: e.message)
+          else
+            MessageBlock(
+              icon: AppIcons.alert,
+              title: "Couldn't load this onboarding",
+              body: 'Check your connection and try again.',
+              action: AppButton(
+                label: 'Try again',
+                kind: ButtonKind.secondary,
+                onPressed: () => ref.invalidate(onboardingProvider(id)),
+              ),
             ),
-          ),
         ],
       ),
       data: (o) {

@@ -157,6 +157,8 @@ class _VisitRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (visit.kind == 'checkin' && visit.status == VisitStatus.completed && !visit.geoVerified)
+                    Text(visit.checkResult, style: context.text.label.copyWith(color: c.warning), maxLines: 2),
                 ],
               ),
             ),
@@ -189,10 +191,7 @@ class _OpenVisit extends ConsumerWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            [
-              if (at != null) 'Checked in ${formatTime(at)}',
-              visit.geoVerified ? 'verified at the shop' : 'not verified',
-            ].join(' · '),
+            [if (at != null) 'Checked in ${formatTime(at)}', visit.checkResult].join(' · '),
             style: context.text.label,
           ),
           const SizedBox(height: Space.md),

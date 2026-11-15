@@ -31,6 +31,8 @@ class Visit {
     this.distanceM,
     this.radiusM,
     this.geoVerified = false,
+    this.geoCheck,
+    this.geoPincode,
     this.outcome,
     this.summary,
     this.notes,
@@ -51,9 +53,27 @@ class Visit {
   final int? distanceM;
   final int? radiusM;
   final bool geoVerified;
+
+  /// How the CRM checked the check-in point: distance, pincode, wrong_area or unconfirmed (null: no usable GPS).
+  final String? geoCheck;
+  final String? geoPincode;
   final String? outcome;
   final String? summary;
   final String? notes;
+
+  /// The check-in result in words, verified or not.
+  String get checkResult => switch (geoCheck) {
+    _ when geoVerified && geoCheck == 'pincode' =>
+      'Verified in the lead\'s area${geoPincode == null ? '' : ' (pincode $geoPincode)'}',
+    _ when geoVerified => 'Verified at the shop${distanceM == null ? '' : ' · $distanceM m'}',
+    'wrong_area' => 'Checked in outside the lead\'s area${geoPincode == null ? '' : ' (pincode $geoPincode)'}',
+    'unconfirmed' => 'Waiting for the office to confirm the site location',
+    // older check-ins have no check type, only the distance
+    'distance' || null when distanceM != null =>
+      'Checked in $distanceM m from the shop${radiusM == null ? '' : ' (must be within $radiusM m)'}',
+    'distance' => 'Checked in too far from the shop',
+    _ => 'Location not usable: no GPS fix, a mock location or too inaccurate',
+  };
 
   bool get isScheduled => status == VisitStatus.scheduled;
   bool get isOpen => status == VisitStatus.checkedIn;
@@ -79,6 +99,8 @@ class Visit {
       distanceM: (j['distance_m'] as num?)?.toInt(),
       radiusM: (j['radius_m'] as num?)?.toInt(),
       geoVerified: j['geo_verified'] == true,
+      geoCheck: str(j['geo_check']),
+      geoPincode: str(j['geo_pincode']),
       outcome: str(j['outcome']),
       summary: str(j['summary']),
       notes: str(j['notes']),

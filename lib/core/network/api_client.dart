@@ -18,6 +18,9 @@ class ApiException implements Exception {
   bool get isUnauthorized => status == 401;
   bool get isOffline => status == null;
 
+  /// The record isn't this user's to open (moved to someone else) or no longer exists.
+  bool get isNoAccess => status == 403 || status == 404;
+
   String? fieldError(String field) => fieldErrors[field]?.first;
 
   @override

@@ -9,6 +9,7 @@ import '../../core/theme/tokens.dart';
 import '../../core/widgets/page.dart';
 import '../../core/widgets/skeleton.dart';
 import '../../core/widgets/widgets.dart';
+import '../../core/widgets/toast.dart';
 import 'alerts.dart';
 import 'open_alert.dart';
 
@@ -106,7 +107,9 @@ class AlertsScreen extends ConsumerWidget {
                           ),
                           // Open first and mark read in the background, so the screen slides in at once.
                           onTap: () {
-                            if (a.route != null || const {'ticket', 'expense', 'leave'}.contains(a.entity)) {
+                            if (!a.canOpen) {
+                              showToast(context, a.note ?? "This isn't yours to open any more.");
+                            } else if (a.route != null || const {'ticket', 'expense', 'leave'}.contains(a.entity)) {
                               openAlert(context, entity: a.entity, entityId: a.entityId);
                             }
                             if (!a.read) markAlertRead(ref, a.id).ignore();

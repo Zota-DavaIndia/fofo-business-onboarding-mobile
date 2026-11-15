@@ -13,6 +13,8 @@ class Alert {
     this.body,
     this.entity,
     this.entityId,
+    required this.canOpen,
+    this.note,
     this.at,
     this.read = false,
   });
@@ -23,6 +25,10 @@ class Alert {
   final String? body;
   final String? entity;
   final int? entityId;
+
+  /// False when the record is no longer this user's (e.g. the lead moved to another RCM); [note] says why.
+  final bool canOpen;
+  final String? note;
   final DateTime? at;
   final bool read;
 
@@ -41,6 +47,8 @@ class Alert {
     body: str(j['body']),
     entity: str(j['entity']),
     entityId: (j['entity_id'] as num?)?.toInt() ?? int.tryParse('${j['entity_id']}'),
+    canOpen: j['can_open'] == true,
+    note: str(j['note']),
     at: date(j['created_at']),
     read: j['read_at'] != null,
   );

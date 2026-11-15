@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/network/api_client.dart';
 import '../../core/auth/permissions.dart';
 import '../../core/auth/session.dart';
 import '../../core/format.dart';
@@ -35,20 +36,24 @@ class LeadDetailScreen extends ConsumerWidget {
     return lead.when(
       skipLoadingOnReload: true,
       loading: () => PageBody(children: [back, const _LeadSkeleton()]),
-      error: (_, _) => PageBody(
+      error: (e, _) => PageBody(
         children: [
           back,
           const SizedBox(height: Space.xl),
-          MessageBlock(
-            icon: AppIcons.alert,
-            title: "Couldn't load this lead",
-            body: 'Check your connection and try again.',
-            action: AppButton(
-              label: 'Try again',
-              kind: ButtonKind.secondary,
-              onPressed: () => ref.invalidate(leadProvider(id)),
+          // Moved to someone else (or gone): say so, with nothing to retry.
+          if (e is ApiException && e.isNoAccess)
+            MessageBlock(icon: AppIcons.alert, title: "This lead isn't yours to open", body: e.message)
+          else
+            MessageBlock(
+              icon: AppIcons.alert,
+              title: "Couldn't load this lead",
+              body: 'Check your connection and try again.',
+              action: AppButton(
+                label: 'Try again',
+                kind: ButtonKind.secondary,
+                onPressed: () => ref.invalidate(leadProvider(id)),
+              ),
             ),
-          ),
         ],
       ),
       data: (l) {
@@ -337,12 +342,7 @@ class _OpenVisitCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(at == null ? 'Checked in' : 'Checked in at ${formatTime(at)}', style: context.text.bodyStrong),
-                Text(
-                  visit.geoVerified
-                      ? 'Verified at the shop${visit.distanceM == null ? '' : ' · ${visit.distanceM} m'}'
-                      : 'Not verified at the shop',
-                  style: context.text.label,
-                ),
+                Text(visit.checkResult, style: context.text.label),
               ],
             ),
           ),

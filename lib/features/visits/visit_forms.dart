@@ -702,7 +702,7 @@ class _CheckOutScreenState extends ConsumerState<CheckOutScreen> with FormSubmit
         'Qualified',
         AppIcons.check,
         c.success,
-        v.geoVerified ? 'Opens onboarding for this lead.' : 'Needs a verified check-in at the shop.',
+        v.geoVerified ? 'Opens onboarding for this lead.' : 'Needs a verified check-in. ${v.checkResult}.',
       ),
       ('follow_up', 'Follow-up visit', AppIcons.followUp, c.warning, null),
       ('not_qualified', 'Not qualified', AppIcons.alert, c.textSecondary, null),

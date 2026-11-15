@@ -34,4 +34,31 @@ void main() {
     expect(v.when, v.scheduledAt);
     expect(v.geoVerified, isFalse);
   });
+
+  test('a check-in result is explained in words', () {
+    String result(Map<String, dynamic> extra) => Visit.fromJson({
+      'id': 1,
+      'status': 'completed',
+      'kind': 'checkin',
+      'lead': {'id': 2, 'name': 'Asha'},
+      ...extra,
+    }).checkResult;
+
+    expect(result({'geo_verified': true, 'geo_check': 'distance', 'distance_m': 40}), 'Verified at the shop · 40 m');
+    expect(
+      result({'geo_verified': true, 'geo_check': 'pincode', 'geo_pincode': '313001'}),
+      "Verified in the lead's area (pincode 313001)",
+    );
+    expect(
+      result({'geo_check': 'wrong_area', 'geo_pincode': '332205'}),
+      "Checked in outside the lead's area (pincode 332205)",
+    );
+    expect(result({'geo_check': 'unconfirmed'}), 'Waiting for the office to confirm the site location');
+    expect(
+      result({'geo_check': 'distance', 'distance_m': 900, 'radius_m': 500}),
+      'Checked in 900 m from the shop (must be within 500 m)',
+    );
+    expect(result({}), 'Location not usable: no GPS fix, a mock location or too inaccurate');
+    expect(result({'distance_m': 700, 'radius_m': 500}), 'Checked in 700 m from the shop (must be within 500 m)');
+  });
 }
