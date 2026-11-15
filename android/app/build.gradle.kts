@@ -16,6 +16,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    // Needed for the Firebase resources in defaultConfig (resValue is off by default in AGP 9).
+    buildFeatures {
+        resValues = true
+    }
+
     defaultConfig {
         // Never change this after the first release: updates only install
         // over an app with the same id and the same signing key.
