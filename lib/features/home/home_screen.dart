@@ -104,11 +104,18 @@ class HomeScreen extends ConsumerWidget {
           const WorkTiles(),
         if (dashboard?.hasError ?? false)
           AppCard(child: Text("Couldn't load your numbers. Pull down to retry.", style: context.text.secondary)),
-        if (loading)
+        // The same layout as the loaded numbers, with placeholder bars, so nothing jumps when they arrive.
+        if (loading) ...[
+          const SectionLabel('Overview'),
+          const _Headline(d: null),
+          const SectionLabel('Today'),
+          const _TodayRow(today: null),
+          const SectionLabel('Recent leads'),
           const SkeletonScope(
-            label: 'Loading your numbers',
-            child: SkeletonRows(count: 4, lead: BoneLead.none),
+            label: 'Loading recent leads',
+            child: SkeletonRows(count: 3, lead: BoneLead.tile),
           ),
+        ],
         if (d != null) ...[
           const SectionLabel('Overview'),
           _Headline(d: d),
@@ -210,15 +217,17 @@ class _AttentionList extends ConsumerWidget {
 class _TodayRow extends StatelessWidget {
   const _TodayRow({required this.today});
 
-  final TodayCounts today;
+  /// Null while loading: placeholder numbers under the same labels.
+  final TodayCounts? today;
 
   @override
   Widget build(BuildContext context) {
+    final t = today;
     final items = [
-      ('New leads', today.newLeads),
-      ('Calls logged', today.calls),
-      ('Visits checked in', today.visits),
-      ('Qualified', today.qualified),
+      ('New leads', t?.newLeads),
+      ('Calls logged', t?.calls),
+      ('Visits checked in', t?.visits),
+      ('Qualified', t?.qualified),
     ];
     // Tiles size to their one-line label; the row scrolls sideways when it
     // doesn't fit, instead of wrapping labels.
@@ -232,7 +241,12 @@ class _TodayRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${items[i].$2}', style: context.text.number.copyWith(fontSize: 22)),
+                  if (items[i].$2 case final n?)
+                    Text('$n', style: context.text.number.copyWith(fontSize: 22))
+                  else
+                    const SkeletonScope(
+                      child: Padding(padding: EdgeInsets.symmetric(vertical: 4), child: Bone(width: 28, height: 20)),
+                    ),
                   const SizedBox(height: Space.xs),
                   Text(
                     items[i].$1,
@@ -252,7 +266,8 @@ class _TodayRow extends StatelessWidget {
 class _Headline extends ConsumerWidget {
   const _Headline({required this.d});
 
-  final Dashboard d;
+  /// Null while loading: the cards show placeholder numbers.
+  final Dashboard? d;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -262,33 +277,34 @@ class _Headline extends ConsumerWidget {
       context.go('/leads');
     }
 
+    final d = this.d;
     final cards = [
       StatCard(
         label: 'Total leads',
-        value: '${d.total}',
+        value: d == null ? null : '${d.total}',
         icon: AppIcons.leads,
         tone: StatTone.lavender,
         onTap: () => leads(LeadFilter.all),
       ),
       StatCard(
         label: 'Qualified',
-        value: '${d.count('QUALIFIED')}',
-        caption: '${d.conversionPct}% · ${d.qualifiedThisMonth} this month',
+        value: d == null ? null : '${d.count('QUALIFIED')}',
+        caption: d == null ? '' : '${d.conversionPct}% · ${d.qualifiedThisMonth} this month',
         icon: AppIcons.check,
         tone: StatTone.teal,
         onTap: () => leads(LeadFilter.qualified),
       ),
       StatCard(
         label: 'Onboarding: your action',
-        value: '${d.onboardingNeedsAction}',
-        caption: '${d.onboardingWaiting} with review teams',
+        value: d == null ? null : '${d.onboardingNeedsAction}',
+        caption: d == null ? '' : '${d.onboardingWaiting} with review teams',
         icon: AppIcons.store,
         tone: StatTone.mustard,
         onTap: () => openTarget(context, ref, const OnboardingsTarget('needs_action')),
       ),
       StatCard(
         label: 'Stores live',
-        value: '${d.onboardingLive}',
+        value: d == null ? null : '${d.onboardingLive}',
         icon: AppIcons.shield,
         tone: StatTone.olive,
         onTap: () => openTarget(context, ref, const OnboardingsTarget('live')),

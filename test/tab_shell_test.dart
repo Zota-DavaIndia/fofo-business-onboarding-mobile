@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart' show Size;
 import 'package:flutter_test/flutter_test.dart';
@@ -35,7 +37,7 @@ AppUser _user(List<String> permissions) => AppUser.fromJson({
   'permissions': permissions,
 });
 
-Future<void> _pump(WidgetTester tester, AppUser? user) async {
+Future<void> _pump(WidgetTester tester, AppUser? user, {Future<Dashboard> Function()? dashboard}) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
@@ -66,19 +68,21 @@ Future<void> _pump(WidgetTester tester, AppUser? user) async {
           return status == null ? all : all.where((l) => l.status == status).toList();
         }),
         dashboardProvider.overrideWith(
-          (ref) async => Dashboard.fromJson({
-            'total': 5,
-            'by_status': {'ASSIGNED': 4, 'QUALIFIED': 1},
-            'attention': [
-              {
-                'key': 'visits_overdue',
-                'label': 'Visits overdue',
-                'count': 1,
-                'target': {'screen': 'leads', 'queue': 'visits_due'},
-              },
-            ],
-            'today': {'new_leads': 1, 'calls': 2, 'visits': 0, 'qualified': 0},
-          }),
+          (ref) async => dashboard != null
+              ? await dashboard()
+              : Dashboard.fromJson({
+                  'total': 5,
+                  'by_status': {'ASSIGNED': 4, 'QUALIFIED': 1},
+                  'attention': [
+                    {
+                      'key': 'visits_overdue',
+                      'label': 'Visits overdue',
+                      'count': 1,
+                      'target': {'screen': 'leads', 'queue': 'visits_due'},
+                    },
+                  ],
+                  'today': {'new_leads': 1, 'calls': 2, 'visits': 0, 'qualified': 0},
+                }),
         ),
         alertsProvider.overrideWith((ref) async => (items: const <Alert>[], unread: 0)),
         availableUpdateProvider.overrideWith((ref) async => null),
@@ -86,7 +90,13 @@ Future<void> _pump(WidgetTester tester, AppUser? user) async {
       child: const FieldApp(),
     ),
   );
-  await tester.pumpAndSettle();
+  if (dashboard == null) {
+    await tester.pumpAndSettle();
+  } else {
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 100)); // the placeholders pulse, so it never settles
+    }
+  }
 }
 
 void main() {
@@ -101,6 +111,14 @@ void main() {
     expect(find.text('Hi Arjun'), findsOneWidget);
     expect(find.text('Visits overdue'), findsOneWidget);
     expect(find.text('Total leads'), findsOneWidget);
+  });
+
+  testWidgets('while the numbers load, Home shows the same sections with placeholder numbers', (tester) async {
+    await _pump(tester, _user(['leads.view', 'dashboard.view']), dashboard: () => Completer<Dashboard>().future);
+    for (final text in ['Overview', 'Total leads', 'Qualified', 'Stores live', 'Today', 'New leads']) {
+      expect(find.text(text), findsWidgets, reason: text);
+    }
+    expect(find.text('5'), findsNothing);
   });
 
   testWidgets('a user with every permission sees all five tabs', (tester) async {

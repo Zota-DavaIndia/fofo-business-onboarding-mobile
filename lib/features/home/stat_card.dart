@@ -20,7 +20,7 @@ class StatCard extends StatelessWidget {
 
   final String label;
 
-  /// A smaller line under the label, e.g. "33% · 3 this month".
+  /// A smaller line under the label, e.g. "33% · 3 this month". Empty while loading: a placeholder bar.
   final String? caption;
 
   /// Null while loading: shows a placeholder bar.
@@ -77,7 +77,13 @@ class StatCard extends StatelessWidget {
                   ),
                 const SizedBox(height: 2),
                 Text(label, style: context.text.label.copyWith(color: fg)),
-                if (caption != null) Text(caption!, style: context.text.caption.copyWith(color: t.sub)),
+                if (caption case final c? when c.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    child: Bone(width: 72, height: 9, color: fg.withValues(alpha: 0.12)),
+                  )
+                else if (caption != null)
+                  Text(caption!, style: context.text.caption.copyWith(color: t.sub)),
               ],
             ),
           ),

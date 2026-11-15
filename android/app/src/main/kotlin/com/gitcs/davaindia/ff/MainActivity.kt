@@ -18,7 +18,7 @@ import java.security.MessageDigest
 /**
  * The self-updater's Android half (channel "ff/updater"): whether this app may install packages,
  * the setting to allow it, the SHA-256 of a downloaded APK, and handing the APK to the system installer.
- * Also makes the Alerts channel that pushes arrive on.
+ * Also makes the Alerts channel that pushes arrive on, and answers "ff/device" with the hardware ID.
  */
 class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,6 +41,15 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        // The phone's hardware ID for sign-in blocking: Android ID, which stays the same across reinstalls of
+        // this app and changes only on a factory reset. Apps can't read the MAC address on Android 10+.
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ff/device").setMethodCallHandler { call, result ->
+            if (call.method == "hardwareId") {
+                result.success(Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID))
+            } else {
+                result.notImplemented()
+            }
+        }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ff/updater").setMethodCallHandler { call, result ->
             when (call.method) {
                 "canInstall" -> result.success(

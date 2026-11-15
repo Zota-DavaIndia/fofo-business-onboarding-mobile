@@ -94,6 +94,7 @@ class PushService {
           '/devices',
           body: {
             'device_id': await store.deviceId(),
+            'hardware_id': await store.hardwareId(),
             'fcm_token': token,
             'platform': defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android',
             'app_version': Env.appVersion,

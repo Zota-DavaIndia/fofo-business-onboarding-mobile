@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-11-15
+
+### Added
+
+- The app sends the phone's hardware ID (Android ID / iOS vendor ID) when signing in and registering for push, so the CRM can block a phone even after the app is reinstalled.
+
+### Changed
+
+- When the CRM blocks the account or the phone, the app signs out and shows why.
+- Home's loading state has the same layout as the loaded numbers: the Overview cards and Today tiles with placeholder numbers, then placeholder rows.
+
 ## [1.1.4] - 2026-11-15
 
 ### Fixed

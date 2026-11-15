@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Token and device id, kept in the platform keystore.
@@ -51,6 +52,19 @@ class SecureStore {
 
   /// Stable id for this install, sent at login so an admin can approve
   /// the device. Created once.
+  /// The phone's own ID (Android ID / iOS identifierForVendor), which survives reinstalling the app, so the
+  /// CRM can block a phone. Null where the platform doesn't give one; cached for the session.
+  Future<String?> hardwareId() => _hardwareId ??= () async {
+    try {
+      final id = await const MethodChannel('ff/device').invokeMethod<String>('hardwareId');
+      return id == null || id.isEmpty ? null : (id.length > 64 ? id.substring(0, 64) : id);
+    } catch (_) {
+      return null;
+    }
+  }();
+
+  static Future<String?>? _hardwareId;
+
   Future<String> deviceId() async {
     final existing = await _s.read(key: _deviceKey);
     if (existing != null) return existing;

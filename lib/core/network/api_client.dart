@@ -57,7 +57,13 @@ class ApiClient {
           handler.next(options);
         },
         onError: (e, handler) {
-          if (e.response?.statusCode == 401) onUnauthorized();
+          // The CRM ends the session when the account or this phone is blocked; treat it like a sign-out.
+          final status = e.response?.statusCode;
+          final body = e.response?.data;
+          final code = body is Map ? body['code'] : null;
+          if (status == 401 || (status == 403 && (code == 'account_blocked' || code == 'device_blocked'))) {
+            onUnauthorized();
+          }
           handler.next(e);
         },
       ),

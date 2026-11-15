@@ -50,6 +50,7 @@ class SessionController extends AsyncNotifier<AppUser?> {
         id.field: id.value,
         'password': password,
         'device_id': await _store.deviceId(),
+        'hardware_id': await _store.hardwareId(),
         'device_name': '${Platform.operatingSystem} ${Platform.operatingSystemVersion}'.trim(),
         'platform': Platform.operatingSystem,
         'app_version': Env.appVersion,

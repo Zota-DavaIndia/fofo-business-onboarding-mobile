@@ -48,6 +48,7 @@ class TrackSession extends AsyncNotifier<Track?> {
 
   /// Throws [ApiException] with the server's message on a wrong or expired code.
   Future<void> verify({required String mobile, required String otp}) async {
+    final store = ref.read(secureStoreProvider);
     final res = await ref
         .read(apiClientProvider)
         .post<Map<String, dynamic>>(
@@ -55,10 +56,12 @@ class TrackSession extends AsyncNotifier<Track?> {
           body: {
             'mobile': mobile,
             'otp': otp,
+            'device_id': await store.deviceId(),
+            'hardware_id': await store.hardwareId(),
+            'platform': Platform.operatingSystem,
             'device_name': '${Platform.operatingSystem} ${Platform.operatingSystemVersion}'.trim(),
           },
         );
-    final store = ref.read(secureStoreProvider);
     await store.saveTrackToken('${res.data['token']}');
     final track = res.data['track'];
     if (track is Map<String, dynamic>) {
