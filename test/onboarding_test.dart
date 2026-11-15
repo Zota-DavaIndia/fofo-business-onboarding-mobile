@@ -40,6 +40,7 @@ Map<String, dynamic> _rejected() => {
     'paid_pending': 0,
     'balance': 354000,
     'payment_required': true,
+    'can_pay': true,
   },
   'payments': [
     {
@@ -68,6 +69,7 @@ void main() {
       'paid_pending': 50000,
       'balance': 254000,
       'payment_required': true,
+      'can_pay': true,
     };
 
     test('real figures are read as sent', () {
@@ -85,10 +87,22 @@ void main() {
         'paid_pending',
         'fee_set',
         'payment_required',
+        'can_pay',
       ]) {
         expect(() => Fee.fromJson(base()..remove(key)), throwsFormatException, reason: key);
         expect(Fee.tryParse(base()..remove(key)), isNull, reason: key);
       }
+    });
+
+    test('a fee that cannot be paid yet carries the reason', () {
+      final f = Fee.fromJson(
+        base()
+          ..['can_pay'] = false
+          ..['note'] = 'The franchise fee opens once Dava India has verified the documents.',
+      );
+      expect(f.canPay, isFalse);
+      expect(f.note, 'The franchise fee opens once Dava India has verified the documents.');
+      expect(f.toReport, 204000, reason: 'the figures still show; only paying waits');
     });
 
     test('a fee HO has not set has no amounts and nothing to report', () {
@@ -101,6 +115,7 @@ void main() {
         'paid_verified': 0,
         'paid_pending': 0,
         'payment_required': true,
+        'can_pay': true,
       });
       expect([f.set, f.total, f.balance, f.toReport], [false, null, null, null]);
     });
@@ -168,6 +183,7 @@ void main() {
         'paid_verified': 0,
         'paid_pending': 0,
         'payment_required': true,
+        'can_pay': true,
       },
     });
     expect(mine.myTurn, StepKey.storeBasics);

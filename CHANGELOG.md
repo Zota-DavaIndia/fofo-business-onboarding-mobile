@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-11-15
+
+### Fixed
+
+- My store offered the franchise fee ("Fill now", the bank details and "I have paid") while the documents were still with compliance. The fee now opens only once every document is verified: until then its tile is locked and says so, the fee row is hidden, and the fee screen explains why paying isn't open yet.
+
 ## [1.2.1] - 2026-11-15
 
 ### Fixed

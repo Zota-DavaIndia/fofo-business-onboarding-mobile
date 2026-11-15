@@ -474,8 +474,8 @@ class PartnerPaymentScreen extends ConsumerWidget {
     final fee = ref.watch(partnerFeeProvider);
     final payments = ref.watch(partnerPaymentsProvider).value ?? const <Payment>[];
     final f = fee.value;
-    // Paying needs the real figures from the CRM: nothing is offered until it says what is left.
-    final canPay = (f?.toReport ?? 0) > 0;
+    // Paying needs the real figures from the CRM and an open payment step (documents verified first).
+    final canPay = f != null && f.canPay && (f.toReport ?? 0) > 0;
     return PageBody(
       bottom: canPay
           ? ActionBar(
@@ -507,7 +507,12 @@ class PartnerPaymentScreen extends ConsumerWidget {
         else if (f == null)
           const SkeletonScope(child: SkeletonCard(lines: 4))
         else if (!f.set)
-          AppCard(child: Text('The franchise fee shows here once Dava India sets it.', style: context.text.secondary))
+          AppCard(
+            child: Text(
+              f.note ?? 'The franchise fee shows here once Dava India sets it.',
+              style: context.text.secondary,
+            ),
+          )
         else ...[
           AppCard(
             child: Column(
@@ -526,7 +531,12 @@ class PartnerPaymentScreen extends ConsumerWidget {
               ],
             ),
           ),
-          if (f.accountNo != null) ...[
+          if (!f.canPay && f.note != null)
+            AppCard(
+              color: context.colors.tintOf(context.colors.info),
+              child: Text(f.note!, style: context.text.body),
+            ),
+          if (f.canPay && f.accountNo != null) ...[
             const SectionLabel('Transfer to'),
             GroupedList(
               children: [
@@ -944,7 +954,8 @@ class PartnerDetailsList extends ConsumerWidget {
       if (me.store.name != null) (StepKey.storeBasics, me.store.name!),
       if (me.owner.name != null || me.documents.isNotEmpty)
         (StepKey.ownerDocuments, '${me.documents.length} ${me.documents.length == 1 ? 'document' : 'documents'}'),
-      if (me.payment case final pay? when pay.required)
+      // the fee row appears once paying is open (documents verified) or there is a payment to show
+      if (me.payment case final pay? when pay.required && (pay.canPay || pay.paidVerified > 0 || pay.paidPending > 0))
         (
           StepKey.payment,
           !pay.set ? 'Fee not set yet' : (pay.balance! <= 0 ? 'Paid in full' : '${rupees(pay.balance!)} left'),

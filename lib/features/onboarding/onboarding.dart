@@ -200,6 +200,8 @@ class Fee {
     required this.required,
     required this.paidVerified,
     required this.paidPending,
+    required this.canPay,
+    this.note,
     this.amount,
     this.gst,
     this.total,
@@ -214,6 +216,10 @@ class Fee {
   final bool required;
   final double paidVerified;
   final double paidPending;
+
+  /// A payment can be reported now (the step is open or was rejected); [note] says why not.
+  final bool canPay;
+  final String? note;
   final double? amount;
   final double? gst;
   final double? total;
@@ -230,14 +236,17 @@ class Fee {
     double need(String key) => _num(j[key]) ?? (throw FormatException('The franchise fee came without "$key".'));
     final set = j['fee_set'];
     final required = j['payment_required'];
-    if (set is! bool || required is! bool) {
-      throw const FormatException('The franchise fee came without fee_set or payment_required.');
+    final canPay = j['can_pay'];
+    if (set is! bool || required is! bool || canPay is! bool) {
+      throw const FormatException('The franchise fee came without fee_set, payment_required or can_pay.');
     }
     return Fee(
       set: set,
       required: required,
       paidVerified: need('paid_verified'),
       paidPending: need('paid_pending'),
+      canPay: canPay,
+      note: str(j['note']),
       amount: set ? need('amount') : null,
       gst: set ? need('gst') : null,
       total: set ? need('total') : null,

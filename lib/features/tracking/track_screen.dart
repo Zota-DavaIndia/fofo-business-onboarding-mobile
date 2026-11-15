@@ -350,7 +350,12 @@ class _StepActions extends ConsumerWidget {
               _StepTile(
                 stepKey: k,
                 state: _state(k, step, me),
-                onTap: me == null ? null : () => _open(context, ref, me, k),
+                onTap: me == null
+                    ? null
+                    : _state(k, step, me) == _TileState.locked
+                    // a step that isn't open yet says when it opens instead of showing a form it can't send
+                    ? () => showToast(context, step?.detail ?? "This step isn't open yet.")
+                    : () => _open(context, ref, me, k),
               ),
           ],
         ),
