@@ -173,40 +173,48 @@ class OnboardingDetailScreen extends ConsumerWidget {
                   ),
               ],
             ),
-            if (o.fee.required && o.step(StepKey.payment)?.state != StepStatus.skipped) ...[
+            if (o.fee case final fee? when fee.required && o.step(StepKey.payment)?.state != StepStatus.skipped) ...[
               const SectionLabel('Franchise fee'),
-              AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(child: Text('Total, with GST', style: context.text.secondary)),
-                        Text(rupees(o.fee.total), style: context.text.bodyStrong),
-                      ],
-                    ),
-                    const SizedBox(height: Space.sm),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: o.fee.total == 0 ? 0 : (o.fee.paidVerified / o.fee.total).clamp(0, 1),
-                        minHeight: 6,
-                        backgroundColor: context.fieldFill,
-                        color: context.colors.success,
+              if (!fee.set)
+                AppCard(
+                  child: Text(
+                    "The franchise fee for this onboarding isn't set yet. HO sets it.",
+                    style: context.text.secondary,
+                  ),
+                )
+              else
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: Text('Total, with GST', style: context.text.secondary)),
+                          Text(rupees(fee.total!), style: context.text.bodyStrong),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: Space.xs),
-                    Text(
-                      [
-                        '${rupees(o.fee.paidVerified)} verified',
-                        if (o.fee.paidPending > 0) '${rupees(o.fee.paidPending)} with finance',
-                        '${rupees(o.fee.balance)} left',
-                      ].join(' · '),
-                      style: context.text.label,
-                    ),
-                  ],
+                      const SizedBox(height: Space.sm),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(3),
+                        child: LinearProgressIndicator(
+                          value: fee.total! == 0 ? 0 : (fee.paidVerified / fee.total!).clamp(0, 1),
+                          minHeight: 6,
+                          backgroundColor: context.fieldFill,
+                          color: context.colors.success,
+                        ),
+                      ),
+                      const SizedBox(height: Space.xs),
+                      Text(
+                        [
+                          '${rupees(fee.paidVerified)} verified',
+                          if (fee.paidPending > 0) '${rupees(fee.paidPending)} with finance',
+                          '${rupees(fee.balance!)} left',
+                        ].join(' · '),
+                        style: context.text.label,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
             ],
             const SectionLabel('Timeline'),
             _Timeline(id: id),

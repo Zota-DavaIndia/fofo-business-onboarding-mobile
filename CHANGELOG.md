@@ -8,7 +8,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 
-- The franchise fee screen could show "Left to pay ₹0" and hide "I have paid" when the server sent no balance. The app now works out what is left from the total and what has been received.
+- The franchise fee screen showed "Left to pay ₹0" and hid "I have paid". Fee figures now come only from the CRM: every amount is the server's own, a fee HO hasn't set shows as not set, and figures that fail to load say so with a retry instead of showing ₹0.
+- Customers now see the bank account to pay into on the franchise fee screen, once it is set in the CRM.
 
 ## [1.1.8] - 2026-11-15
 

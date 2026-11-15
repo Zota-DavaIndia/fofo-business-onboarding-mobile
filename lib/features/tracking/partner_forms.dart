@@ -474,7 +474,8 @@ class PartnerPaymentScreen extends ConsumerWidget {
     final fee = ref.watch(partnerFeeProvider);
     final payments = ref.watch(partnerPaymentsProvider).value ?? const <Payment>[];
     final f = fee.value;
-    final canPay = f != null && f.balance - f.paidPending > 0;
+    // Paying needs the real figures from the CRM: nothing is offered until it says what is left.
+    final canPay = (f?.toReport ?? 0) > 0;
     return PageBody(
       bottom: canPay
           ? ActionBar(
@@ -492,18 +493,31 @@ class PartnerPaymentScreen extends ConsumerWidget {
           : null,
       children: [
         PageHeader('Franchise fee', onBack: () => Navigator.of(context).maybePop()),
-        if (f == null)
+        if (f == null && fee.hasError)
+          MessageBlock(
+            icon: AppIcons.alert,
+            title: "Couldn't load the fee",
+            body: 'Check your connection and try again.',
+            action: AppButton(
+              label: 'Try again',
+              kind: ButtonKind.secondary,
+              onPressed: () => ref.invalidate(partnerFeeProvider),
+            ),
+          )
+        else if (f == null)
           const SkeletonScope(child: SkeletonCard(lines: 4))
+        else if (!f.set)
+          AppCard(child: Text('The franchise fee shows here once Dava India sets it.', style: context.text.secondary))
         else ...[
           AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Left to pay', style: context.text.secondary),
-                Text(rupees(f.balance), style: context.text.title),
+                Text(rupees(f.balance!), style: context.text.title),
                 Text(
                   [
-                    'Total ${rupees(f.total)} incl. GST',
+                    'Total ${rupees(f.total!)} incl. GST',
                     if (f.paidVerified > 0) '${rupees(f.paidVerified)} received',
                     if (f.paidPending > 0) '${rupees(f.paidPending)} being checked',
                   ].join(' · '),
@@ -586,9 +600,7 @@ class PartnerReportPaymentScreen extends ConsumerStatefulWidget {
 
 class _PartnerReportPaymentState extends ConsumerState<PartnerReportPaymentScreen> with FormSubmit, _PartnerSubmit {
   final _utr = TextEditingController();
-  late final _amount = TextEditingController(
-    text: ((widget.fee?.balance ?? 0) - (widget.fee?.paidPending ?? 0)).clamp(0, double.infinity).round().toString(),
-  );
+  late final _amount = TextEditingController(text: widget.fee?.toReport?.round().toString() ?? '');
   final _payer = TextEditingController();
   final _account = TextEditingController();
   final _bank = TextEditingController();
@@ -932,8 +944,11 @@ class PartnerDetailsList extends ConsumerWidget {
       if (me.store.name != null) (StepKey.storeBasics, me.store.name!),
       if (me.owner.name != null || me.documents.isNotEmpty)
         (StepKey.ownerDocuments, '${me.documents.length} ${me.documents.length == 1 ? 'document' : 'documents'}'),
-      if (me.payment.required)
-        (StepKey.payment, me.payment.balance <= 0 ? 'Paid in full' : '${rupees(me.payment.balance)} left'),
+      if (me.payment case final pay? when pay.required)
+        (
+          StepKey.payment,
+          !pay.set ? 'Fee not set yet' : (pay.balance! <= 0 ? 'Paid in full' : '${rupees(pay.balance!)} left'),
+        ),
       if (!me.drugLicence.isEmpty) (StepKey.drugLicence, me.drugLicence.number!),
     ];
     if (rows.isEmpty) return const SizedBox.shrink();

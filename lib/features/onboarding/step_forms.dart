@@ -736,7 +736,8 @@ class PaymentStepScreen extends ConsumerWidget {
     final o = ob.value;
     final f = fee.value ?? o?.fee;
     final step = o?.step(StepKey.payment);
-    final canRecord = o != null && (step?.state.actionable ?? false) && (f == null || f.balance - f.paidPending > 0);
+    // Recording needs the real figures: nothing is offered until the server has said what is left to pay.
+    final canRecord = o != null && (step?.state.actionable ?? false) && (f?.toReport ?? 0) > 0;
     Future<void> record([Payment? edit]) async {
       if (o == null) return;
       final saved = await pushForm<bool>(context, RecordPaymentScreen(onboarding: o, fee: f, payment: edit));
@@ -757,23 +758,42 @@ class PaymentStepScreen extends ConsumerWidget {
         PageHeader('Franchise fee', onBack: () => Navigator.of(context).maybePop()),
         if (o != null) Text('${o.name} · ${o.number}', style: context.text.label),
         if (step != null) _Rejection(step),
-        if (f == null)
+        if (f == null && fee.hasError)
+          MessageBlock(
+            icon: AppIcons.alert,
+            title: "Couldn't load the fee",
+            body: 'The amounts come from the CRM. Check your connection and try again.',
+            action: AppButton(
+              label: 'Try again',
+              kind: ButtonKind.secondary,
+              onPressed: () => ref.invalidate(franchiseFeeProvider(onboardingId)),
+            ),
+          )
+        else if (f == null)
           const SkeletonScope(child: SkeletonCard(lines: 4))
         else ...[
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _AmountRow('Fee', rupees(f.amount)),
-                _AmountRow('GST', rupees(f.gst)),
-                Divider(height: Space.xl, color: context.colors.separator),
-                _AmountRow('Total', rupees(f.total), strong: true),
-                _AmountRow('Verified', rupees(f.paidVerified)),
-                if (f.paidPending > 0) _AmountRow('With finance', rupees(f.paidPending)),
-                _AmountRow('Left to pay', rupees(f.balance), strong: true),
-              ],
+          if (!f.set)
+            AppCard(
+              child: Text(
+                "The franchise fee for this onboarding isn't set yet. HO sets it.",
+                style: context.text.secondary,
+              ),
+            )
+          else
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _AmountRow('Fee', rupees(f.amount!)),
+                  _AmountRow('GST', rupees(f.gst!)),
+                  Divider(height: Space.xl, color: context.colors.separator),
+                  _AmountRow('Total', rupees(f.total!), strong: true),
+                  _AmountRow('Verified', rupees(f.paidVerified)),
+                  if (f.paidPending > 0) _AmountRow('With finance', rupees(f.paidPending)),
+                  _AmountRow('Left to pay', rupees(f.balance!), strong: true),
+                ],
+              ),
             ),
-          ),
           if (f.beneficiary != null || f.accountNo != null) ...[
             const SectionLabel('Pay to'),
             GroupedList(
@@ -881,9 +901,7 @@ class _RecordPaymentState extends ConsumerState<RecordPaymentScreen> with FormSu
   Payment? get _p => widget.payment;
   late final _utr = TextEditingController(text: _p?.utr ?? '');
   late final _amount = TextEditingController(
-    text: _p != null
-        ? _p!.amount.round().toString()
-        : ((widget.fee?.balance ?? 0) - (widget.fee?.paidPending ?? 0)).clamp(0, double.infinity).round().toString(),
+    text: _p != null ? _p!.amount.round().toString() : widget.fee?.toReport?.round().toString() ?? '',
   );
   late final _payer = TextEditingController(text: _p?.payerName ?? widget.onboarding.name);
   final _account = TextEditingController();

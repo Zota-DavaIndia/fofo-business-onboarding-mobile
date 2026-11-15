@@ -191,50 +191,72 @@ class OnboardingDoc {
   );
 }
 
+/// The franchise fee exactly as the server reports it, from the onboarding and its payment records. Nothing
+/// is assumed: while HO hasn't set the fee, [set] is false and the amounts are null; a figure the server
+/// leaves out makes [Fee.fromJson] throw, so a screen shows "couldn't load" rather than a made-up number.
 class Fee {
   const Fee({
-    this.amount = 0,
-    this.gst = 0,
-    this.total = 0,
-    this.paidVerified = 0,
-    this.paidPending = 0,
-    this.balance = 0,
-    this.required = true,
+    required this.set,
+    required this.required,
+    required this.paidVerified,
+    required this.paidPending,
+    this.amount,
+    this.gst,
+    this.total,
+    this.balance,
     this.beneficiary,
     this.accountNo,
     this.ifsc,
     this.bank,
   });
 
-  final double amount;
-  final double gst;
-  final double total;
+  final bool set;
+  final bool required;
   final double paidVerified;
   final double paidPending;
-  final double balance;
-  final bool required;
+  final double? amount;
+  final double? gst;
+  final double? total;
+  final double? balance;
   final String? beneficiary;
   final String? accountNo;
   final String? ifsc;
   final String? bank;
 
+  /// Left to pay less what finance is already checking: what can still be reported. Null until the fee is set.
+  double? get toReport => set ? (balance! - paidPending).clamp(0, double.infinity).toDouble() : null;
+
   factory Fee.fromJson(Map<String, dynamic> j) {
-    final total = _num(j['total'] ?? j['amount_due']) ?? 0;
-    final verified = _num(j['paid_verified']) ?? 0;
+    double need(String key) => _num(j[key]) ?? (throw FormatException('The franchise fee came without "$key".'));
+    final set = j['fee_set'];
+    final required = j['payment_required'];
+    if (set is! bool || required is! bool) {
+      throw const FormatException('The franchise fee came without fee_set or payment_required.');
+    }
     return Fee(
-      amount: _num(j['amount'] ?? j['fee']) ?? 0,
-      gst: _num(j['gst']) ?? 0,
-      total: total,
-      paidVerified: verified,
-      paidPending: _num(j['paid_pending']) ?? 0,
-      // An older server sends no balance: work it out rather than show nothing left to pay.
-      balance: _num(j['balance']) ?? (total - verified).clamp(0, double.infinity).toDouble(),
-      required: j['payment_required'] != false,
+      set: set,
+      required: required,
+      paidVerified: need('paid_verified'),
+      paidPending: need('paid_pending'),
+      amount: set ? need(j.containsKey('amount') ? 'amount' : 'fee') : null,
+      gst: set ? need('gst') : null,
+      total: set ? need(j.containsKey('total') ? 'total' : 'amount_due') : null,
+      balance: set ? need('balance') : null,
       beneficiary: str(j['beneficiary']),
       accountNo: str(j['account_no']),
       ifsc: str(j['ifsc']),
       bank: str(j['bank']),
     );
+  }
+
+  /// The fee inside a larger response, or null when it is missing or incomplete (the screen then says so).
+  static Fee? tryParse(Object? j) {
+    if (j is! Map<String, dynamic>) return null;
+    try {
+      return Fee.fromJson(j);
+    } on FormatException {
+      return null;
+    }
   }
 }
 
@@ -321,7 +343,7 @@ class Onboarding {
     this.store = const StoreDetails(),
     this.owner = const OwnerDetails(),
     this.documents = const [],
-    this.fee = const Fee(),
+    this.fee,
     this.payments = const [],
     this.drugLicence = const DrugLicence(),
     this.storeCode,
@@ -344,7 +366,9 @@ class Onboarding {
   final StoreDetails store;
   final OwnerDetails owner;
   final List<OnboardingDoc> documents;
-  final Fee fee;
+
+  /// Null when the server sent no complete fee figures.
+  final Fee? fee;
   final List<Payment> payments;
   final DrugLicence drugLicence;
   final String? storeCode;
@@ -401,7 +425,7 @@ class Onboarding {
         for (final d in (j['documents'] as List? ?? const []))
           if (d is Map<String, dynamic>) OnboardingDoc.fromJson(d),
       ],
-      fee: j['fee'] is Map<String, dynamic> ? Fee.fromJson(j['fee'] as Map<String, dynamic>) : const Fee(),
+      fee: Fee.tryParse(j['fee']),
       payments: [
         for (final p in (j['payments'] as List? ?? const []))
           if (p is Map<String, dynamic>) Payment.fromJson(p),

@@ -16,7 +16,7 @@ class PartnerMe {
     this.rejectedFields = const [],
     this.store = const StoreDetails(),
     this.owner = const OwnerDetails(),
-    this.payment = const Fee(),
+    this.payment,
     this.drugLicence = const DrugLicence(),
     this.documents = const [],
     this.rcmName,
@@ -37,7 +37,9 @@ class PartnerMe {
   final List<String> rejectedFields;
   final StoreDetails store;
   final OwnerDetails owner;
-  final Fee payment;
+
+  /// Null when the server sent no complete fee figures.
+  final Fee? payment;
   final DrugLicence drugLicence;
   final List<OnboardingDoc> documents;
   final String? rcmName;
@@ -68,7 +70,7 @@ class PartnerMe {
       owner: j['owner'] is Map<String, dynamic>
           ? OwnerDetails.fromJson(j['owner'] as Map<String, dynamic>)
           : const OwnerDetails(),
-      payment: j['payment'] is Map<String, dynamic> ? Fee.fromJson(j['payment'] as Map<String, dynamic>) : const Fee(),
+      payment: Fee.tryParse(j['payment']),
       drugLicence: j['drug_licence'] is Map<String, dynamic>
           ? DrugLicence.fromJson(j['drug_licence'] as Map<String, dynamic>)
           : const DrugLicence(),

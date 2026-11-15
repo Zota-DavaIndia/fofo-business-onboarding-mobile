@@ -32,6 +32,7 @@ Map<String, dynamic> _rejected() => {
     'latitude': 12.956,
   },
   'fee': {
+    'fee_set': true,
     'amount': 300000,
     'gst': 54000,
     'total': 354000,
@@ -57,6 +58,46 @@ Map<String, dynamic> _rejected() => {
 };
 
 void main() {
+  group('franchise fee figures come only from the server', () {
+    Map<String, dynamic> base() => {
+      'fee_set': true,
+      'fee': 300000,
+      'gst': 54000,
+      'total': 354000,
+      'paid_verified': 100000,
+      'paid_pending': 50000,
+      'balance': 254000,
+      'payment_required': true,
+    };
+
+    test('real figures are read as sent', () {
+      final f = Fee.fromJson(base());
+      expect([f.total, f.balance, f.paidVerified, f.paidPending], [354000, 254000, 100000, 50000]);
+      expect(f.toReport, 204000);
+    });
+
+    test('a missing figure is an error, never a zero', () {
+      for (final key in ['balance', 'total', 'paid_verified', 'paid_pending', 'fee_set', 'payment_required']) {
+        expect(() => Fee.fromJson(base()..remove(key)), throwsFormatException, reason: key);
+        expect(Fee.tryParse(base()..remove(key)), isNull, reason: key);
+      }
+    });
+
+    test('a fee HO has not set has no amounts and nothing to report', () {
+      final f = Fee.fromJson({
+        'fee_set': false,
+        'fee': null,
+        'gst': null,
+        'total': null,
+        'balance': null,
+        'paid_verified': 0,
+        'paid_pending': 0,
+        'payment_required': true,
+      });
+      expect([f.set, f.total, f.balance, f.toReport], [false, null, null, null]);
+    });
+  });
+
   test('parses an onboarding and finds the step to fix', () {
     final o = Onboarding.fromJson(_rejected());
     expect(o.number, 'PT-000007');
@@ -70,7 +111,7 @@ void main() {
     expect(next.rejectedFields, ['storefront']);
     expect(next.reviewedBy, 'Onboarding Ops');
     expect(o.store.areaSqft, 320);
-    expect(o.fee.balance, 354000);
+    expect(o.fee!.balance, 354000);
     expect(o.payments.single.editable, isTrue);
     expect(o.payments.single.date, DateTime(2026, 11, 13).toLocal());
     expect(o.documents.single.rejected, isTrue);
@@ -110,11 +151,20 @@ void main() {
       'waiting_for': null,
       'rejection_reason': 'Photo not clear',
       'rejected_fields': ['storefront'],
-      'payment': {'amount_due': 354000, 'balance': 354000, 'paid_verified': 0, 'paid_pending': 0},
+      'payment': {
+        'fee_set': true,
+        'fee': 300000,
+        'gst': 54000,
+        'amount_due': 354000,
+        'balance': 354000,
+        'paid_verified': 0,
+        'paid_pending': 0,
+        'payment_required': true,
+      },
     });
     expect(mine.myTurn, StepKey.storeBasics);
     expect(mine.fixing, isTrue);
-    expect(mine.payment.total, 354000);
+    expect(mine.payment!.total, 354000);
 
     final theirs = PartnerMe.fromJson({
       'partner_no': 'PT-1',
