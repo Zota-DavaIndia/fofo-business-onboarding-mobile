@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.7] - 2026-11-15
+
+### Added
+
+- Double-tap the app version on Profile to check for an update now. A newer version starts downloading straight away; otherwise nothing happens.
+
 ## [1.1.6] - 2026-11-15
 
 ### Changed

@@ -190,11 +190,31 @@ class _UpdateScreenState extends ConsumerState<UpdateScreen> with WidgetsBinding
 
 /// The app version on Profile, with the update's state on the right: Update when a new version is out,
 /// the percentage and a ring with a stop button while it downloads, Install once it's downloaded and checked.
+///
+/// Double-tapping the row checks GitHub Releases now and, when there's a newer version, starts downloading
+/// it; with nothing newer (or offline) nothing happens.
 class AppVersionRow extends ConsumerWidget {
-  const AppVersionRow({super.key});
+  const AppVersionRow({super.key, this.fetch = Updater.fetch});
+
+  /// Downloads a release (swapped out in tests).
+  final Future<String> Function(Release) fetch;
+
+  Future<void> _checkNow(WidgetRef ref) async {
+    ref.invalidate(availableUpdateProvider);
+    final r = await ref.read(availableUpdateProvider.future);
+    if (r != null) unawaited(fetch(r).then((_) {}, onError: (_) {})); // a failed download stays quiet too
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onDoubleTap: () => _checkNow(ref),
+      child: _row(context, ref),
+    );
+  }
+
+  Widget _row(BuildContext context, WidgetRef ref) {
     final r = ref.watch(availableUpdateProvider).value;
     if (r == null) return const ListRow(title: Env.appVersion, subtitle: 'App version');
     return ListenableBuilder(

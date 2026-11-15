@@ -76,6 +76,45 @@ void main() {
     expect(find.text('App version · 9.0.0 downloaded'), findsOneWidget);
   });
 
+  testWidgets('double-tapping the version checks now and downloads only when there is a new release', (tester) async {
+    Release? latest;
+    final fetched = <String>[];
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [availableUpdateProvider.overrideWith((ref) async => latest)],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: Scaffold(
+            body: AppVersionRow(
+              fetch: (r) async {
+                fetched.add(r.version);
+                return '/tmp/app.apk';
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Nothing newer: nothing happens.
+    await tester.tap(find.text('App version'));
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(find.text('App version'));
+    await tester.pumpAndSettle();
+    expect(fetched, isEmpty);
+    expect(find.text('App version'), findsOneWidget);
+
+    // A release is out: the double tap starts its download.
+    latest = const Release(version: '9.0.0', build: 1, apkUrl: 'https://example.com/app.apk');
+    await tester.tap(find.text('App version'));
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.tap(find.text('App version'));
+    await tester.pumpAndSettle();
+    expect(fetched, ['9.0.0']);
+    expect(find.text('App version · 9.0.0 is available'), findsOneWidget);
+  });
+
   testWidgets('tapping the ring stops the download', (tester) async {
     var stopped = 0;
     await tester.pumpWidget(
