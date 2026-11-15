@@ -206,10 +206,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   List<Widget> _identify(BuildContext context) => [
     Text('Sign in', style: context.text.title),
-    Text(
-      'Staff: use the account your admin set up. Made a franchise enquiry? Use the same mobile number to see where it is.',
-      style: context.text.secondary,
-    ),
+    Text('Enter your email or mobile number to continue.', style: context.text.secondary),
     const SizedBox(height: Space.sm),
     AppField(
       controller: _id,
@@ -238,7 +235,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   List<Widget> _passwordStep(BuildContext context) => [
     Text('Sign in', style: context.text.title),
-    Text('Use the account your admin set up for you.', style: context.text.secondary),
+    Text('Enter the password for this account.', style: context.text.secondary),
     const SizedBox(height: Space.xs),
     _who(context),
     const SizedBox(height: Space.sm),
@@ -260,12 +257,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         onTap: () => setState(() => _showPassword = !_showPassword),
       ),
     ),
-    Text('Forgot your password? Ask your admin to reset it.', style: context.text.label),
+    Text('Forgot your password? Ask Dava India to reset it.', style: context.text.label),
   ];
 
   List<Widget> _otpStep(BuildContext context) => [
     Text('Enter the code', style: context.text.title),
-    Text('We sent a 6-digit code to this number.', style: context.text.secondary),
+    Text('Use the 6-digit sign-in code for this number.', style: context.text.secondary),
     _who(context),
     const SizedBox(height: Space.sm),
     AppField(
@@ -303,7 +300,7 @@ class _DeviceBlocked extends StatelessWidget {
         const MessageBlock(
           icon: AppIcons.lock,
           title: 'This phone needs approval',
-          body: 'Send this device ID to your admin. Once they approve it, sign in again.',
+          body: 'Send this device ID to Dava India. Once it is approved, sign in again.',
         ),
         GroupedList(
           children: [

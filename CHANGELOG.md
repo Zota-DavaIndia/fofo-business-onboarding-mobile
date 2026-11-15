@@ -14,6 +14,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Changed
 
 - A check-in that isn't verified says why: outside the lead's area, too far from the shop, waiting for the office to confirm the site location, or no usable GPS.
+- The sign-in screens no longer speak to staff or partners separately: "Enter your email or mobile number to continue.", "Enter the password for this account.", and "Ask Dava India" for a password reset or device approval.
 
 ## [1.2.0] - 2026-11-15
 
