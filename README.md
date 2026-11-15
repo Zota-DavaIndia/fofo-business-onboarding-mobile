@@ -57,7 +57,7 @@ Built so far:
 - Day plan with a map of today's stores and leads; store check-in and check-out with a summary; store tickets followed to resolution; a calendar of visits, callbacks, follow-ups, plans, leave and scheduled activities.
 - Coordinates only ever come from the phone's GPS; there are no typed or hand-picked locations.
 - Live alerts while the app is open: a 15-second check refreshes what a new alert touched and shows a toast that opens it. Push notifications for a closed app are built in and turn on with the Firebase settings below.
-- Updates on Android: the app checks GitHub Releases at launch and every 6 hours. When a newer release is out it opens the update screen once for that version (Home and Profile keep offering it); the app downloads the APK, checks its SHA-256 against the release and opens the installer.
+- Updates on Android: the app quietly checks GitHub Releases each time it opens or comes back to the front (at most every 15 minutes) and every 6 hours while it stays open. When a newer release is out it downloads the APK in the background, checks its SHA-256 against the release, then opens the update screen ready to install, once per release per launch (Home and Profile keep offering it). Offline or a failed download shows nothing; the next open tries again and reuses a finished download.
 - Profile tab with contact details, app version, a copyable device ID and sign out.
 - Light and dark themes that follow the phone setting.
 - Custom icon set drawn from SVG sources, with no icon font or SVG library.
@@ -94,7 +94,7 @@ flutter run --dart-define-from-file=env/local.json
 
 Maps use a Google Maps key that stays out of git: put `MAPS_API_KEY = …` in `ios/Flutter/Secrets.xcconfig` and `MAPS_API_KEY=…` in `android/local.properties`, and add `"MAPS_ENABLED": true` to your env file. Without it, map cards fall back to an "open in Google Maps" link. Release builds read the `MAPS_API_KEY` repository secret.
 
-Push notifications use Firebase without config files: pass `FIREBASE_API_KEY`, `FIREBASE_PROJECT_ID`, `FIREBASE_SENDER_ID` and `FIREBASE_ANDROID_APP_ID` (and `FIREBASE_IOS_APP_ID`) as dart-defines, or the repository secrets of the same names for releases. Without them push stays off. iOS push also needs the Push Notifications capability and an APNs key in Firebase.
+Push notifications use Firebase without config files: pass `FIREBASE_API_KEY` (the Android key), `FIREBASE_PROJECT_ID`, `FIREBASE_SENDER_ID` and `FIREBASE_ANDROID_APP_ID` (and for iOS `FIREBASE_IOS_API_KEY` and `FIREBASE_IOS_APP_ID`) as dart-defines, or the repository secrets of the same names for releases. Without them push stays off. iOS push also needs the Push Notifications capability and an APNs key in Firebase.
 
 Check the code:
 

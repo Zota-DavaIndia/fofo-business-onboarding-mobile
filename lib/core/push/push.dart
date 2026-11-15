@@ -11,18 +11,29 @@ import '../config/env.dart';
 /// Firebase settings for this build, from `--dart-define`s. Empty means push is off
 /// and the app relies on the live alert check while it's open.
 abstract final class PushConfig {
+  /// Firebase makes one API key per platform, each locked to its app; this one is Android's.
   static const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
+  static const iosApiKey = String.fromEnvironment('FIREBASE_IOS_API_KEY');
   static const projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
   static const senderId = String.fromEnvironment('FIREBASE_SENDER_ID');
   static const androidAppId = String.fromEnvironment('FIREBASE_ANDROID_APP_ID');
   static const iosAppId = String.fromEnvironment('FIREBASE_IOS_APP_ID');
 
-  static String get appId => defaultTargetPlatform == TargetPlatform.iOS ? iosAppId : androidAppId;
+  static bool get _ios => defaultTargetPlatform == TargetPlatform.iOS;
 
-  static bool get enabled => apiKey.isNotEmpty && projectId.isNotEmpty && senderId.isNotEmpty && appId.isNotEmpty;
+  static String get appId => _ios ? iosAppId : androidAppId;
 
-  static FirebaseOptions get options =>
-      FirebaseOptions(apiKey: apiKey, appId: appId, messagingSenderId: senderId, projectId: projectId);
+  static String get key => _ios && iosApiKey.isNotEmpty ? iosApiKey : apiKey;
+
+  static bool get enabled => key.isNotEmpty && projectId.isNotEmpty && senderId.isNotEmpty && appId.isNotEmpty;
+
+  static FirebaseOptions get options => FirebaseOptions(
+    apiKey: key,
+    appId: appId,
+    messagingSenderId: senderId,
+    projectId: projectId,
+    iosBundleId: _ios ? 'com.gitcs.davaindia.ff' : null,
+  );
 }
 
 /// The data part of a push: `{type, entity, entity_id, notification_id}` plus its title and body.

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -16,33 +15,41 @@ import '../../core/widgets/widgets.dart';
 
 /// Download, check and install a release.
 class UpdateScreen extends ConsumerStatefulWidget {
-  const UpdateScreen({super.key, this.release});
+  const UpdateScreen({super.key, this.release, this.apk});
 
   final Release? release;
+
+  /// The APK when it was already downloaded in the background.
+  final String? apk;
+
+  /// How many update screens are open, so the watcher doesn't stack a second one.
+  static int open = 0;
 
   @override
   ConsumerState<UpdateScreen> createState() => _UpdateScreenState();
 }
 
 class _UpdateScreenState extends ConsumerState<UpdateScreen> with WidgetsBindingObserver {
-  double? _progress;
   String? _error;
-  String? _apk;
+  late String? _apk = widget.apk;
   bool _needsPermission = false;
-  CancelToken? _cancel;
+  bool _starting = false;
 
   Release? get _release => widget.release ?? ref.watch(availableUpdateProvider).value;
 
   @override
   void initState() {
     super.initState();
+    UpdateScreen.open++;
     WidgetsBinding.instance.addObserver(this);
+    // A background download is already running: show its progress and pick up the file when it's done.
+    if (_apk == null && Updater.progress.value != null) _start(install: false);
   }
 
   @override
   void dispose() {
+    UpdateScreen.open--;
     WidgetsBinding.instance.removeObserver(this);
-    _cancel?.cancel();
     super.dispose();
   }
 
@@ -52,35 +59,24 @@ class _UpdateScreenState extends ConsumerState<UpdateScreen> with WidgetsBinding
     if (state == AppLifecycleState.resumed && _needsPermission && _apk != null) _install();
   }
 
-  Future<void> _start() async {
+  Future<void> _start({bool install = true}) async {
     final r = _release;
     if (r == null) return;
     setState(() {
       _error = null;
-      _progress = 0;
+      _starting = true;
     });
-    _cancel = CancelToken();
     try {
-      _apk = await Updater.download(
-        r,
-        cancel: _cancel,
-        onProgress: (p) => mounted ? setState(() => _progress = p) : null,
-      );
-      await _install();
+      final apk = await Updater.fetch(r);
+      if (!mounted) return;
+      setState(() => _apk = apk);
+      if (install) await _install();
     } on UpdateException catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.message;
-          _progress = null;
-        });
-      }
+      if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) {
-        setState(() {
-          _error = "Couldn't download the update. Check your connection and try again.";
-          _progress = null;
-        });
-      }
+      if (mounted) setState(() => _error = "Couldn't download the update. Check your connection and try again.");
+    } finally {
+      if (mounted) setState(() => _starting = false);
     }
   }
 
@@ -102,9 +98,16 @@ class _UpdateScreenState extends ConsumerState<UpdateScreen> with WidgetsBinding
   @override
   Widget build(BuildContext context) {
     final r = _release;
+    return ValueListenableBuilder<double?>(
+      valueListenable: Updater.progress,
+      builder: (context, progress, _) => _body(context, r, progress),
+    );
+  }
+
+  Widget _body(BuildContext context, Release? r, double? progress) {
     final c = context.colors;
-    final downloading = _progress != null && _apk == null;
     final ready = _apk != null;
+    final downloading = !ready && (_starting || progress != null);
     return PageBody(
       header: PageHeader('Update the app', onBack: () => Navigator.of(context).maybePop()),
       bottom: r == null
@@ -150,13 +153,16 @@ class _UpdateScreenState extends ConsumerState<UpdateScreen> with WidgetsBinding
           ClipRRect(
             borderRadius: BorderRadius.circular(Radii.badge),
             child: LinearProgressIndicator(
-              value: _progress == 0 ? null : _progress,
+              value: progress == null || progress == 0 ? null : progress,
               minHeight: 8,
               color: c.accent,
               backgroundColor: c.accentTint,
             ),
           ),
-          Text(_progress == 0 ? 'Starting…' : '${((_progress ?? 0) * 100).round()}%', style: context.text.label),
+          Text(
+            progress == null || progress == 0 ? 'Starting…' : '${(progress * 100).round()}%',
+            style: context.text.label,
+          ),
         ],
         if (_needsPermission)
           AppCard(
@@ -223,16 +229,28 @@ class _Dismissed extends Notifier<String?> {
   void set(String? v) => state = v;
 }
 
-/// Checks GitHub Releases at launch and every [every] after, and opens [UpdateScreen] once per new release.
-/// Timers stop while the phone sleeps the app, so a resume past the interval checks again.
+/// Checks GitHub Releases quietly each time the app opens or comes back (at most every [resumeGap]) and every
+/// [every] while it stays open. A new release is downloaded and checked in the background, then [UpdateScreen]
+/// opens ready to install, once per release per launch. Offline or a failed download shows nothing; the next
+/// open tries again and reuses whatever was already downloaded.
 class UpdateWatcher extends ConsumerStatefulWidget {
-  const UpdateWatcher({super.key, required this.navigatorKey, required this.child, this.every = checkEvery});
+  const UpdateWatcher({
+    super.key,
+    required this.navigatorKey,
+    required this.child,
+    this.every = checkEvery,
+    this.fetch = Updater.fetch,
+  });
 
   static const checkEvery = Duration(hours: 6);
+  static const resumeGap = Duration(minutes: 15);
 
   final GlobalKey<NavigatorState> navigatorKey;
   final Duration every;
   final Widget child;
+
+  /// Downloads a release and returns the APK path (swapped out in tests).
+  final Future<String> Function(Release) fetch;
 
   @override
   ConsumerState<UpdateWatcher> createState() => _UpdateWatcherState();
@@ -263,7 +281,8 @@ class _UpdateWatcherState extends ConsumerState<UpdateWatcher> with WidgetsBindi
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final last = _lastCheck;
-    if (state == AppLifecycleState.resumed && (last == null || DateTime.now().difference(last) >= widget.every)) {
+    if (state == AppLifecycleState.resumed &&
+        (last == null || DateTime.now().difference(last) >= UpdateWatcher.resumeGap)) {
       _check();
     }
   }
@@ -275,11 +294,21 @@ class _UpdateWatcherState extends ConsumerState<UpdateWatcher> with WidgetsBindi
     if (!mounted || r == null || _open) return;
     final key = '${r.version}+${r.build}';
     if (_offered == key) return;
+    final String apk;
+    try {
+      apk = await widget.fetch(r);
+    } catch (_) {
+      return; // offline or a bad download: try again next time
+    }
     final nav = widget.navigatorKey.currentState;
-    if (nav == null) return;
+    if (!mounted || nav == null || _open || _offered == key || UpdateScreen.open > 0) return;
     _offered = key;
     _open = true;
-    await nav.push<void>(MaterialPageRoute(builder: (_) => UpdateScreen(release: r)));
+    await nav.push<void>(
+      MaterialPageRoute(
+        builder: (_) => UpdateScreen(release: r, apk: apk),
+      ),
+    );
     _open = false;
   }
 

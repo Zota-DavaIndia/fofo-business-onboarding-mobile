@@ -468,20 +468,18 @@ class MessageBlock extends StatelessWidget {
 
 /// Solid bar pinned to the bottom of a screen for its main actions.
 /// The fill and edge of bars pinned to the bottom (the tab bar, a form's button bar): solid, with a
-/// semi-transparent hairline and a soft, wide shadow above, like iOS's tab bar, so content scrolling
-/// underneath stays separate. Dark mode darkens above the bar, since a light shadow wouldn't show.
+/// semi-transparent hairline and a hairline-soft shadow above it, so content scrolling underneath stays
+/// separate without a heavy edge.
 BoxDecoration bottomBarDecoration(BuildContext context) {
   final c = context.colors;
   final dark = Theme.of(context).brightness == Brightness.dark;
   return BoxDecoration(
     color: c.card,
     border: Border(top: BorderSide(color: c.separator)),
+    // Just a whisper above the hairline: tight and faint, not a cast shadow.
     boxShadow: dark
-        ? const [BoxShadow(color: Color(0x59000000), blurRadius: 18, offset: Offset(0, -6))]
-        : const [
-            BoxShadow(color: Color(0x0F1E1915), blurRadius: 18, offset: Offset(0, -6)),
-            BoxShadow(color: Color(0x0A1E1915), blurRadius: 3, offset: Offset(0, -1)),
-          ],
+        ? const [BoxShadow(color: Color(0x33000000), blurRadius: 6, offset: Offset(0, -1))]
+        : const [BoxShadow(color: Color(0x0D1E1915), blurRadius: 6, offset: Offset(0, -1))],
   );
 }
 

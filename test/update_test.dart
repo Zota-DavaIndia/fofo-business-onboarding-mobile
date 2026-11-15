@@ -49,8 +49,12 @@ void main() {
         child: MaterialApp(
           theme: AppTheme.light(),
           navigatorKey: nav,
-          builder: (context, child) =>
-              UpdateWatcher(navigatorKey: nav, every: const Duration(minutes: 1), child: child!),
+          builder: (context, child) => UpdateWatcher(
+            navigatorKey: nav,
+            every: const Duration(minutes: 1),
+            fetch: (_) async => '/tmp/app.apk',
+            child: child!,
+          ),
           home: const Text('the app'),
         ),
       ),
@@ -59,6 +63,7 @@ void main() {
     expect(checks, 1);
     expect(find.text('Version 9.0.0'), findsNothing);
     expect(find.text('9.0.0'), findsOneWidget);
+    expect(find.text('Install'), findsOneWidget); // downloaded before the screen opened
 
     nav.currentState!.pop();
     await tester.pumpAndSettle();

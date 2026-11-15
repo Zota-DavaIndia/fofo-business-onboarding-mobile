@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-11-15
+
+### Added
+
+- Push notifications on Android through Firebase: new leads, approvals, payments and reminders arrive on the phone, and tapping one opens its screen.
+
+### Changed
+
+- Updates download quietly in the background each time the app opens, then the update screen opens ready to install. Nothing shows when offline or if a download fails.
+- The bottom bar shadow is lighter: a hairline with a faint shadow.
+
 ## [1.1.1] - 2026-11-15
 
 ### Changed
