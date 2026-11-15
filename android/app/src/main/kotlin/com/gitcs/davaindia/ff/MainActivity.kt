@@ -1,8 +1,11 @@
 package com.gitcs.davaindia.ff
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterActivity
@@ -15,8 +18,27 @@ import java.security.MessageDigest
 /**
  * The self-updater's Android half (channel "ff/updater"): whether this app may install packages,
  * the setting to allow it, the SHA-256 of a downloaded APK, and handing the APK to the system installer.
+ * Also makes the Alerts channel that pushes arrive on.
  */
 class MainActivity : FlutterActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        createAlertsChannel()
+    }
+
+    /**
+     * Pushes go to this channel (the manifest makes it Firebase's default and the CRM names it). Without it
+     * Firebase uses its own default-importance channel, which doesn't pop up. Creating it again is a no-op,
+     * and once made the user's own settings for it win.
+     */
+    private fun createAlertsChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val channel = NotificationChannel("alerts", "Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+            description = "New leads, approvals, payments and reminders"
+        }
+        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "ff/updater").setMethodCallHandler { call, result ->

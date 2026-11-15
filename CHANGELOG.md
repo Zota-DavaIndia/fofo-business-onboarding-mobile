@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-11-15
+
+### Fixed
+
+- Push notifications arrived silently in Android's default channel. They now come on the app's own Alerts channel, so they pop up with sound and show a white "ff" in the status bar.
+
 ## [1.1.2] - 2026-11-15
 
 ### Added
