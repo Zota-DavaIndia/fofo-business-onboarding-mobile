@@ -7,6 +7,7 @@ import 'package:fofo_onboarding/app/app.dart';
 import 'package:fofo_onboarding/core/auth/session.dart';
 import 'package:fofo_onboarding/core/auth/user.dart';
 import 'package:fofo_onboarding/core/update/update.dart';
+import 'package:fofo_onboarding/core/widgets/skeleton.dart';
 import 'package:fofo_onboarding/features/alerts/alerts.dart';
 import 'package:fofo_onboarding/features/home/dashboard.dart';
 import 'package:fofo_onboarding/features/leads/lead.dart';
@@ -113,12 +114,13 @@ void main() {
     expect(find.text('Total leads'), findsOneWidget);
   });
 
-  testWidgets('while the numbers load, Home shows the same sections with placeholder numbers', (tester) async {
+  testWidgets('while the numbers load, Home shows placeholder shapes only, no labels', (tester) async {
     await _pump(tester, _user(['leads.view', 'dashboard.view']), dashboard: () => Completer<Dashboard>().future);
-    for (final text in ['Overview', 'Total leads', 'Qualified', 'Stores live', 'Today', 'New leads']) {
-      expect(find.text(text), findsWidgets, reason: text);
+    expect(find.bySemanticsLabel('Loading your numbers'), findsOneWidget);
+    expect(find.byType(Bone), findsWidgets);
+    for (final text in ['Overview', 'Total leads', 'Today', 'New leads']) {
+      expect(find.text(text), findsNothing, reason: text);
     }
-    expect(find.text('5'), findsNothing);
   });
 
   testWidgets('a user with every permission sees all five tabs', (tester) async {

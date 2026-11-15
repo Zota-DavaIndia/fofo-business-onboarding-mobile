@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.1.8] - 2026-11-15
+
+### Changed
+
+- Home's loading state is plain grey placeholder shapes in the same layout as the numbers (the Overview grid, the Today row and a list), with no labels or card colours, matching every other loading screen.
+- While an update downloads, the Home banner shows the same ring with a stop button as Profile, in place of the download icon.
+
 ## [1.1.7] - 2026-11-15
 
 ### Added

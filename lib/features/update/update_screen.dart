@@ -248,10 +248,13 @@ class AppVersionRow extends ConsumerWidget {
 /// The percentage, then a ring that fills as the download runs with a stop square inside: tapping the
 /// ring stops the download.
 class DownloadProgress extends StatelessWidget {
-  const DownloadProgress(this.progress, {super.key, this.onStop = Updater.cancel});
+  const DownloadProgress(this.progress, {super.key, this.onStop = Updater.cancel, this.showPercent = true});
 
   final double progress;
   final VoidCallback onStop;
+
+  /// Off where the percentage is already written next to it (the Home banner).
+  final bool showPercent;
 
   @override
   Widget build(BuildContext context) {
@@ -260,13 +263,15 @@ class DownloadProgress extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ExcludeSemantics(
-          child: Text(
-            '$pct%',
-            style: context.text.label.copyWith(color: c.accent, fontWeight: FontWeight.w500),
+        if (showPercent) ...[
+          ExcludeSemantics(
+            child: Text(
+              '$pct%',
+              style: context.text.label.copyWith(color: c.accent, fontWeight: FontWeight.w500),
+            ),
           ),
-        ),
-        const SizedBox(width: Space.xs),
+          const SizedBox(width: Space.xs),
+        ],
         Semantics(
           button: true,
           label: 'Stop download, $pct percent done',
@@ -323,7 +328,14 @@ class UpdateBanner extends ConsumerWidget {
       child: AppCard(
         child: Row(
           children: [
-            IconTile(AppIcons.download, color: c.accent, background: c.accentTint, size: 36, iconSize: 18),
+            // While it downloads: the same ring with a stop button as on Profile.
+            ListenableBuilder(
+              listenable: Updater.progress,
+              builder: (context, _) => switch (Updater.progress.value) {
+                final p? => DownloadProgress(p, showPercent: false),
+                null => IconTile(AppIcons.download, color: c.accent, background: c.accentTint, size: 36, iconSize: 18),
+              },
+            ),
             const SizedBox(width: Space.md),
             Expanded(
               child: Column(
