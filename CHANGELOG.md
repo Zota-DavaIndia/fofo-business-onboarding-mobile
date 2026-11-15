@@ -4,6 +4,20 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-15
+
+### Added
+
+- Check-in fills the store address from the enquiry, and once your location is found, fills an empty address or pincode from it ("Filled from your location").
+
+### Fixed
+
+- A partner who had reported a payment saw that payment's amount as their franchise fee on My store. The fee and the last payment now come separately from the CRM.
+
+### Changed
+
+- The franchise fee is read only under the CRM's current field names.
+
 ## [1.1.9] - 2026-11-15
 
 ### Fixed

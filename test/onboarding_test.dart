@@ -61,7 +61,7 @@ void main() {
   group('franchise fee figures come only from the server', () {
     Map<String, dynamic> base() => {
       'fee_set': true,
-      'fee': 300000,
+      'amount': 300000,
       'gst': 54000,
       'total': 354000,
       'paid_verified': 100000,
@@ -77,7 +77,15 @@ void main() {
     });
 
     test('a missing figure is an error, never a zero', () {
-      for (final key in ['balance', 'total', 'paid_verified', 'paid_pending', 'fee_set', 'payment_required']) {
+      for (final key in [
+        'amount',
+        'balance',
+        'total',
+        'paid_verified',
+        'paid_pending',
+        'fee_set',
+        'payment_required',
+      ]) {
         expect(() => Fee.fromJson(base()..remove(key)), throwsFormatException, reason: key);
         expect(Fee.tryParse(base()..remove(key)), isNull, reason: key);
       }
@@ -86,7 +94,7 @@ void main() {
     test('a fee HO has not set has no amounts and nothing to report', () {
       final f = Fee.fromJson({
         'fee_set': false,
-        'fee': null,
+        'amount': null,
         'gst': null,
         'total': null,
         'balance': null,
@@ -153,9 +161,9 @@ void main() {
       'rejected_fields': ['storefront'],
       'payment': {
         'fee_set': true,
-        'fee': 300000,
+        'amount': 300000,
         'gst': 54000,
-        'amount_due': 354000,
+        'total': 354000,
         'balance': 354000,
         'paid_verified': 0,
         'paid_pending': 0,

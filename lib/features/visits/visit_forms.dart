@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/auth/session.dart';
 import '../../core/format.dart';
 import '../../core/icons/app_icon.dart';
 import '../../core/masters.dart';
@@ -210,11 +211,17 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> with FormSubmit {
   final _hospitals = TextEditingController();
   final _pharmacies = TextEditingController();
   final _notes = TextEditingController();
-  late final _storeAddress = TextEditingController(text: widget.lead.storeLocation?.address ?? '');
+  // The store address starts from the enquiry address; GPS fills what is still empty.
+  late final _storeAddress = TextEditingController(
+    text: widget.lead.storeLocation?.address ?? widget.lead.address ?? '',
+  );
   late final _storeLandmark = TextEditingController(text: widget.lead.storeLocation?.landmark ?? '');
   late final _storePincode = TextEditingController(
     text: widget.lead.storeLocation?.pincode ?? widget.lead.pincode ?? '',
   );
+
+  /// Set when the address or pincode came from the GPS lookup.
+  bool _filledFromGps = false;
 
   /// The proposed store is where the phone is now. Off when the store will
   /// be somewhere else; its pin then stays as it was.
@@ -242,7 +249,33 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> with FormSubmit {
   Future<void> _locate() async {
     setState(() => _fix = const _Locating());
     final fix = await _readFix();
-    if (mounted) setState(() => _fix = fix);
+    if (!mounted) return;
+    setState(() => _fix = fix);
+    if (fix is _GotFix) _fillFromGps(fix.position);
+  }
+
+  /// Fills an empty store address or pincode from the street address at the
+  /// phone's position. Optional: when the lookup fails the user types them.
+  Future<void> _fillFromGps(Position p) async {
+    if (!_storeHere || (_storeAddress.text.trim().isNotEmpty && _storePincode.text.trim().isNotEmpty)) return;
+    try {
+      final res = await ref
+          .read(apiClientProvider)
+          .get<Map<String, dynamic>>('/geo/address', query: {'lat': p.latitude, 'lng': p.longitude});
+      if (!mounted || !_storeHere) return;
+      var filled = false;
+      if (res.data['address'] case final String address when _storeAddress.text.trim().isEmpty) {
+        _storeAddress.text = address;
+        filled = true;
+      }
+      if (res.data['pincode'] case final String pincode when _storePincode.text.trim().isEmpty) {
+        _storePincode.text = pincode;
+        filled = true;
+      }
+      if (filled) setState(() => _filledFromGps = true);
+    } catch (_) {
+      // not set up on the server, or offline
+    }
   }
 
   Future<_Fix> _readFix() async {
@@ -398,6 +431,11 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> with FormSubmit {
           textCapitalization: TextCapitalization.sentences,
           errorText: fieldError('store_address'),
         ),
+        if (_filledFromGps)
+          Text(
+            'Filled from your location. Check the shop number and street.',
+            style: context.text.label.copyWith(color: context.colors.textSecondary),
+          ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
