@@ -81,7 +81,8 @@ class _UpdateScreenState extends ConsumerState<UpdateScreen> with WidgetsBinding
       if (install) await _install();
     } on UpdateException catch (e) {
       if (mounted) setState(() => _error = e.message);
-    } catch (_) {
+    } catch (e) {
+      if (Updater.cancelled(e)) return; // stopped from the Profile row: back to Download, no error
       if (mounted) setState(() => _error = "Couldn't download the update. Check your connection and try again.");
     } finally {
       if (mounted) setState(() => _starting = false);
@@ -188,7 +189,7 @@ class _UpdateScreenState extends ConsumerState<UpdateScreen> with WidgetsBinding
 }
 
 /// The app version on Profile, with the update's state on the right: Update when a new version is out,
-/// a ring with the percentage while it downloads, Install once it's downloaded and checked.
+/// the percentage and a ring with a stop button while it downloads, Install once it's downloaded and checked.
 class AppVersionRow extends ConsumerWidget {
   const AppVersionRow({super.key});
 
@@ -224,46 +225,64 @@ class AppVersionRow extends ConsumerWidget {
   }
 }
 
-/// A small ring around a download arrow that fills as the download runs, with the percentage beside it.
+/// The percentage, then a ring that fills as the download runs with a stop square inside: tapping the
+/// ring stops the download.
 class DownloadProgress extends StatelessWidget {
-  const DownloadProgress(this.progress, {super.key});
+  const DownloadProgress(this.progress, {super.key, this.onStop = Updater.cancel});
 
   final double progress;
+  final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
     final pct = (progress * 100).round();
-    return Semantics(
-      label: 'Downloading, $pct percent',
-      excludeSemantics: true,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ExcludeSemantics(
+          child: Text(
             '$pct%',
-            style: context.text.label.copyWith(color: c.accent, fontWeight: FontWeight.w600),
+            style: context.text.label.copyWith(color: c.accent, fontWeight: FontWeight.w500),
           ),
-          const SizedBox(width: Space.sm),
-          SizedBox.square(
-            dimension: 24,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox.expand(
-                  child: CircularProgressIndicator(
-                    value: progress == 0 ? null : progress,
-                    strokeWidth: 2.5,
-                    color: c.accent,
-                    backgroundColor: c.accentTint,
-                  ),
+        ),
+        const SizedBox(width: Space.xs),
+        Semantics(
+          button: true,
+          label: 'Stop download, $pct percent done',
+          excludeSemantics: true,
+          child: GestureDetector(
+            onTap: onStop,
+            behavior: HitTestBehavior.opaque,
+            // A 40 pt target around the 28 pt ring.
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: SizedBox.square(
+                dimension: 28,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox.expand(
+                      child: CircularProgressIndicator(
+                        value: progress == 0 ? null : progress,
+                        strokeWidth: 2.5,
+                        strokeCap: StrokeCap.round,
+                        color: c.accent,
+                        backgroundColor: c.accentTint,
+                      ),
+                    ),
+                    Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(color: c.accent, borderRadius: BorderRadius.circular(2)),
+                    ),
+                  ],
                 ),
-                AppIcon(AppIcons.download, size: 12, color: c.accent),
-              ],
+              ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

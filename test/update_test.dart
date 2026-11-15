@@ -76,6 +76,19 @@ void main() {
     expect(find.text('App version · 9.0.0 downloaded'), findsOneWidget);
   });
 
+  testWidgets('tapping the ring stops the download', (tester) async {
+    var stopped = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(body: DownloadProgress(0.45, onStop: () => stopped++)),
+      ),
+    );
+    expect(find.text('45%'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Stop download, 45 percent done'));
+    expect(stopped, 1);
+  });
+
   testWidgets('the watcher offers each new release once and checks again on its interval', (tester) async {
     var latest = '9.0.0';
     var checks = 0;

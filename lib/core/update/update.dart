@@ -96,6 +96,13 @@ class Updater {
 
   static Future<String>? _pending;
   static String? _pendingKey;
+  static CancelToken? _cancel;
+
+  /// Stops the running download; its partial file is deleted. The next check (or a tap on Update) starts over.
+  static void cancel() => _cancel?.cancel('stopped');
+
+  /// Whether [e] came from [cancel] rather than a failure, so callers can stay quiet about it.
+  static bool cancelled(Object e) => e is DioException && CancelToken.isCancel(e);
 
   /// Download progress from 0 to 1 while a download runs, else null.
   static final progress = ValueNotifier<double?>(null);
@@ -136,10 +143,12 @@ class Updater {
     final file = File(path);
     if (file.existsSync() && (r.size == null || file.lengthSync() == r.size) && await _matches(r, path)) return path;
     progress.value = 0;
+    final cancel = _cancel = CancelToken();
     try {
       await Dio().download(
         r.apkUrl,
         path,
+        cancelToken: cancel,
         onReceiveProgress: (got, total) {
           final all = total > 0 ? total : (r.size ?? 0);
           if (all > 0) progress.value = got / all;
@@ -147,6 +156,7 @@ class Updater {
       );
     } finally {
       progress.value = null;
+      if (identical(_cancel, cancel)) _cancel = null;
     }
     if (!await _matches(r, path)) {
       file.deleteSync();

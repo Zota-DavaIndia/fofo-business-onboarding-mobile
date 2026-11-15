@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [1.1.6] - 2026-11-15
 
+### Changed
+
+- While an update downloads, the app version on Profile shows the percentage and a ring with a stop button; tapping it stops the download.
+
 ### Fixed
 
 - Push notifications that arrived after Android had stopped the app in the background were dropped. Android now sets up Firebase when a push wakes the app, so they show.
