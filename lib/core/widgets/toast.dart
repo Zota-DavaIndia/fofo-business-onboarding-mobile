@@ -11,9 +11,9 @@ enum ToastKind { success, error, info }
 OverlayEntry? _current;
 Timer? _timer;
 
-/// A short message near the bottom of the screen, above the tab bar or a form's action bar, in the
-/// app's own style: a compact flat card with a toned icon. One at a time; a new one replaces the last.
-/// Tap to act on it, swipe down to dismiss.
+/// A short message at the top of the screen, under the status bar, in the app's own style: a compact
+/// flat card with a toned icon. One at a time; a new one replaces the last. Tap to act on it, swipe up
+/// to dismiss.
 void showToast(
   BuildContext context,
   String message, {
@@ -105,7 +105,7 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
       child: GestureDetector(
         onTap: widget.onTap,
         onVerticalDragEnd: (d) {
-          if ((d.primaryVelocity ?? 0) > 0) widget.onDismiss();
+          if ((d.primaryVelocity ?? 0) < 0) widget.onDismiss();
         },
         child: Container(
           padding: const EdgeInsets.fromLTRB(Space.sm, Space.sm, Space.md, Space.sm),
@@ -152,8 +152,7 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
     return Positioned(
       left: Space.screen,
       right: Space.screen,
-      // Clear of the tab bar and of a form's bottom button.
-      bottom: MediaQuery.paddingOf(context).bottom + Sizes.tabBar + Space.md,
+      top: MediaQuery.paddingOf(context).top + Space.sm,
       child: Material(
         type: MaterialType.transparency,
         child: still
@@ -162,7 +161,7 @@ class _ToastState extends State<_Toast> with SingleTickerProviderStateMixin {
                 opacity: _anim,
                 child: SlideTransition(
                   position: Tween(
-                    begin: const Offset(0, 0.4),
+                    begin: const Offset(0, -0.4),
                     end: Offset.zero,
                   ).animate(CurvedAnimation(parent: _anim, curve: Curves.easeOut)),
                   child: card,

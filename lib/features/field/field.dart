@@ -32,6 +32,7 @@ class WorkDay {
     this.distanceKm = 0,
     this.pings = 0,
     this.date,
+    this.workingWith = const [],
   });
 
   final int id;
@@ -42,6 +43,9 @@ class WorkDay {
   final int pings;
   final DateTime? date;
 
+  /// Colleagues picked under "Work with" when the day started.
+  final List<Colleague> workingWith;
+
   factory WorkDay.fromJson(Map<String, dynamic> j) => WorkDay(
     id: (j['id'] as num).toInt(),
     startedAt: _at(j['started_at']) ?? DateTime.now(),
@@ -50,8 +54,55 @@ class WorkDay {
     distanceKm: _num(j['distance_km']),
     pings: (j['pings'] as num?)?.toInt() ?? 0,
     date: DateTime.tryParse('${j['date']}'),
+    workingWith: [
+      for (final c in (j['with'] as List?) ?? const [])
+        if (c is Map<String, dynamic>) Colleague.fromJson(c),
+    ],
   );
 }
+
+/// How a colleague relates to the signed-in user.
+enum Relation {
+  manager('Your manager'),
+  peer('Your team'),
+  report('Reports to you');
+
+  const Relation(this.label);
+  final String label;
+
+  static Relation parse(Object? v) => switch (v) {
+    'manager' => manager,
+    'peer' => peer,
+    _ => report,
+  };
+}
+
+/// Someone the user can work with: from `/team`, or listed on a started day.
+class Colleague {
+  const Colleague({required this.id, required this.name, this.designation, this.relation});
+
+  final int id;
+  final String name;
+  final String? designation;
+  final Relation? relation;
+
+  factory Colleague.fromJson(Map<String, dynamic> j) => Colleague(
+    id: (j['id'] as num).toInt(),
+    name: str(j['name']) ?? '',
+    designation: str(j['designation']),
+    relation: j['relation'] == null ? null : Relation.parse(j['relation']),
+  );
+}
+
+/// Managers (direct first), colleagues under the same manager, then reports.
+final teamProvider = FutureProvider<List<Colleague>>((ref) async {
+  final res = await ref.watch(apiClientProvider).get<Object?>('/team');
+  final data = res.data;
+  return [
+    for (final c in data is List ? data : const [])
+      if (c is Map<String, dynamic>) Colleague.fromJson(c),
+  ];
+});
 
 typedef Today = ({DayState state, WorkDay? day});
 

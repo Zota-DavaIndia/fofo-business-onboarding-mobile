@@ -23,3 +23,10 @@ String cleanUtr(String input) => input.replaceAll(RegExp(r'[\s-]'), '').toUpperC
 
 /// Same rule as the CRM: 10 to 22 letters or digits once cleaned.
 bool isUtr(String cleaned) => RegExp(r'^[A-Z0-9]{10,22}$').hasMatch(cleaned);
+
+/// "Ravi", "Ravi and Amit", "Ravi, Amit and Neha".
+String joinNames(List<String> names) => switch (names.length) {
+  0 => '',
+  1 => names.first,
+  _ => '${names.sublist(0, names.length - 1).join(', ')} and ${names.last}',
+};

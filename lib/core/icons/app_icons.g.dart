@@ -45,8 +45,10 @@ abstract final class AppIcons {
   static const start = AppIconData(_start);
   static const store = AppIconData(_store);
   static const sync = AppIconData(_sync);
+  static const tick = AppIconData(_tick);
   static const upload = AppIconData(_upload);
   static const user = AppIconData(_user);
+  static const users = AppIconData(_users);
   static const visit = AppIconData(_visit);
 
   static const all = <String, AppIconData>{
@@ -89,8 +91,10 @@ abstract final class AppIcons {
     'start': start,
     'store': store,
     'sync': sync,
+    'tick': tick,
     'upload': upload,
     'user': user,
+    'users': users,
     'visit': visit,
   };
 }
@@ -507,6 +511,12 @@ void _sync(Path p) {
   p.lineTo(10.5, 16.5);
 }
 
+void _tick(Path p) {
+  p.moveTo(5, 12.5);
+  p.lineTo(9.5, 17);
+  p.lineTo(19, 7.5);
+}
+
 void _upload(Path p) {
   p.moveTo(12, 15);
   p.lineTo(12, 5);
@@ -524,6 +534,17 @@ void _user(Path p) {
   p.moveTo(5, 20);
   p.cubicTo(5.8, 16.4, 8.6, 14.5, 12, 14.5);
   p.cubicTo(15.4, 14.5, 18.2, 16.4, 19, 20);
+}
+
+void _users(Path p) {
+  p.addOval(Rect.fromCircle(center: Offset(9, 8.5), radius: 3.25));
+  p.moveTo(3, 19.5);
+  p.cubicTo(3.7, 16.2, 6.1, 14.5, 9, 14.5);
+  p.cubicTo(11.9, 14.5, 14.3, 16.2, 15, 19.5);
+  p.moveTo(15.5, 5.6);
+  p.arcToPoint(Offset(15.5, 11.4), radius: const Radius.circular(3.25), clockwise: true);
+  p.moveTo(17.5, 14.8);
+  p.cubicTo(19.3, 15.4, 20.5, 17, 21, 19.5);
 }
 
 void _visit(Path p) {

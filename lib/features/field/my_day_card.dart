@@ -20,6 +20,7 @@ import 'field.dart';
 import 'leave_screen.dart';
 import 'plan.dart';
 import 'tickets_screen.dart';
+import 'work_with_sheet.dart';
 import '../../core/widgets/toast.dart';
 
 /// "My day" on Home: start and end the working day, with what's been recorded.
@@ -82,6 +83,28 @@ class _MyDayCardState extends ConsumerState<MyDayCard> {
       );
       if (ok != true) return;
     }
+    var withIds = const <int>[];
+    if (start) {
+      setState(() => _busy = true);
+      final List<Colleague> team;
+      try {
+        team = await ref.read(teamProvider.future);
+      } on ApiException catch (e) {
+        if (mounted) {
+          setState(() => _busy = false);
+          showSaveError(context, e);
+        }
+        return;
+      }
+      if (!mounted) return;
+      setState(() => _busy = false);
+      if (team.isNotEmpty) {
+        final picked = await pickWorkWith(context, team);
+        if (picked == null) return;
+        withIds = picked;
+      }
+      if (!mounted) return;
+    }
     setState(() => _busy = true);
     try {
       final p = await _fix();
@@ -96,6 +119,7 @@ class _MyDayCardState extends ConsumerState<MyDayCard> {
               'longitude': p.longitude,
               'accuracy_m': p.accuracy,
               'is_mock_location': p.isMocked,
+              if (withIds.isNotEmpty) 'with_user_ids': withIds,
             },
           );
       ref.invalidate(todayProvider);
@@ -150,6 +174,21 @@ class _MyDayCardState extends ConsumerState<MyDayCard> {
                   : 'Start your day when you begin field work.',
               style: context.text.secondary,
             ),
+          if (day != null && day.workingWith.isNotEmpty) ...[
+            const SizedBox(height: Space.sm),
+            Row(
+              children: [
+                AppIcon(AppIcons.users, size: Sizes.iconSmall, color: c.textSecondary),
+                const SizedBox(width: Space.xs),
+                Expanded(
+                  child: Text(
+                    'With ${joinNames([for (final w in day.workingWith) w.name])}',
+                    style: context.text.secondary,
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (state == DayState.started && !_always) ...[
             const SizedBox(height: Space.sm),
             GestureDetector(
