@@ -9,3 +9,11 @@ Tone toneForStatus(String status) => switch (status) {
   'NOT_QUALIFIED' || 'DROPPED' || 'NOT_INTERESTED' || 'UNREACHABLE' || 'JUNK' || 'NON_SERVICEABLE' => Tone.neutral,
   _ => Tone.neutral,
 };
+
+/// Badge colour for an opportunity's onboarding stage: red when something was sent back, green once the store is
+/// live, otherwise in progress.
+Tone toneForOnboarding(String? status) => switch (status) {
+  final s? when s.contains('REJECTED') => Tone.danger,
+  'STORE_ACTIVE' || 'LIVE' => Tone.success,
+  _ => Tone.info,
+};

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fofo_onboarding/core/format.dart';
 import 'package:fofo_onboarding/core/widgets/widgets.dart';
 import 'package:fofo_onboarding/features/leads/lead.dart';
 import 'package:fofo_onboarding/features/leads/lead_status.dart';
@@ -44,11 +45,50 @@ void main() {
     expect(a.at, isNotNull);
   });
 
-  test('status filters match the Home counts', () {
-    expect(LeadFilter.assigned.query, {'status': 'ASSIGNED'});
-    expect(LeadFilter.followUp.query, {'status': 'FOLLOW_UP'});
-    expect(LeadFilter.closed.query, {'queue': 'closed'});
+  test('quick filters and the filter sheet map to the CRM query', () {
+    expect(LeadFilter.todayCalls.query, {'queue': 'today_calls'});
+    expect(LeadFilter.fresh.query, {'queue': 'new'});
+    expect(LeadFilter.archived.query, {'queue': 'closed'});
     expect(LeadFilter.all.query, isEmpty);
+    expect(LeadTab.opportunities.query, 'opportunity');
+    expect(LeadRefine(from: DateTime(2026, 11, 1), to: DateTime(2026, 11, 21), status: 'ASSIGNED').query, {
+      'from': '2026-11-01',
+      'to': '2026-11-21',
+      'status': 'ASSIGNED',
+    });
+    expect(const LeadRefine().isEmpty, isTrue);
+  });
+
+  test('list fields: New badge, progress and last update', () {
+    final l = Lead.fromJson({
+      'id': 3,
+      'lead_no': 'LD-000003',
+      'name': 'Kapil Jain',
+      'status': 'ASSIGNED',
+      'status_label': 'Assigned',
+      'is_new': true,
+      'progress': 40,
+      'last_update': {
+        'by': {'id': 3, 'name': 'Call Centre Agent'},
+        'at': '2026-11-21T05:00:00+00:00',
+      },
+      'onboarding': {'id': 9, 'onboarding_no': 'OB-000009', 'status_label': 'Store live', 'progress': 100},
+    });
+    expect(l.isNew, isTrue);
+    expect(l.progress, 40);
+    expect(l.lastUpdateBy, 'Call Centre Agent');
+    expect(l.lastUpdateAt, isNotNull);
+    expect(l.onboarding!.statusLabel, 'Store live');
+    expect(l.onboarding!.progress, 100);
+  });
+
+  test('time ago reads like a person would say it', () {
+    final now = DateTime(2026, 11, 21, 15);
+    expect(formatAgo(now.subtract(const Duration(seconds: 20)), now: now), 'Just now');
+    expect(formatAgo(now.subtract(const Duration(minutes: 5)), now: now), '5m ago');
+    expect(formatAgo(DateTime(2026, 11, 21, 9), now: now), '6h ago');
+    expect(formatAgo(DateTime(2026, 11, 20, 22), now: now), 'Yesterday');
+    expect(formatAgo(DateTime(2026, 11, 17, 10), now: now), '17 Nov');
   });
 
   test('badge colours by status, neutral when unknown', () {
@@ -57,6 +97,13 @@ void main() {
     expect(toneForStatus('ASSIGNED'), Tone.accent);
     expect(toneForStatus('DROPPED'), Tone.neutral);
     expect(toneForStatus('SOMETHING_NEW'), Tone.neutral);
+  });
+
+  test('opportunity badges: red when sent back, green once live', () {
+    expect(toneForOnboarding('PAYMENT_REJECTED'), Tone.danger);
+    expect(toneForOnboarding('STORE_ACTIVE'), Tone.success);
+    expect(toneForOnboarding('DL_SUBMITTED'), Tone.info);
+    expect(toneForOnboarding(null), Tone.info);
   });
 
   test('reads campaign, UTM, next moves and allowed actions', () {

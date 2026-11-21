@@ -46,7 +46,7 @@ Future<void> _pump(WidgetTester tester, AppUser? user, {Future<Dashboard> Functi
         trackSessionProvider.overrideWith(_NoTrack.new),
         todaysVisitsProvider.overrideWith((ref) async => const <Visit>[]),
         leadsProvider.overrideWith((ref) async {
-          final f = ref.watch(leadFilterProvider);
+          final tab = ref.watch(leadTabProvider);
           final all = [
             Lead.fromJson({
               'id': 1,
@@ -64,9 +64,12 @@ Future<void> _pump(WidgetTester tester, AppUser? user, {Future<Dashboard> Functi
             }),
           ];
           // The visits_due queue holds the assigned lead in this fake.
-          if (ref.watch(leadQueueProvider)?.queue == 'visits_due') return [all.first];
-          final status = f.query['status'];
-          return status == null ? all : all.where((l) => l.status == status).toList();
+          if (ref.watch(leadQueueProvider)?.queue == 'visits_due') return LeadPage([all.first]);
+          // The fake's follow-up lead stands in for an opportunity.
+          return LeadPage(
+            tab == LeadTab.opportunities ? [all.last] : [all.first],
+            counts: const {LeadTab.leads: 1, LeadTab.opportunities: 1},
+          );
         }),
         dashboardProvider.overrideWith(
           (ref) async => dashboard != null
@@ -141,17 +144,18 @@ void main() {
     await tester.tap(find.text('Leads'));
     await tester.pumpAndSettle();
     expect(find.text('Gaurav Mehta'), findsOneWidget);
-    expect(find.text('Rekha Choudhary'), findsOneWidget);
   });
 
-  testWidgets('filter chips narrow the list', (tester) async {
+  testWidgets('the Opportunities tab shows qualified leads', (tester) async {
     await _pump(tester, _user(['leads.view']));
     await tester.tap(find.text('Leads'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Follow-up'));
+    expect(find.text("Today's calls"), findsOneWidget);
+    await tester.tap(find.text('Opportunities · 1'));
     await tester.pumpAndSettle();
     expect(find.text('Rekha Choudhary'), findsOneWidget);
     expect(find.text('Gaurav Mehta'), findsNothing);
+    expect(find.text("Today's calls"), findsNothing);
   });
 
   testWidgets('a Needs attention row opens Leads on its queue', (tester) async {

@@ -30,3 +30,18 @@ String joinNames(List<String> names) => switch (names.length) {
   1 => names.first,
   _ => '${names.sublist(0, names.length - 1).join(', ')} and ${names.last}',
 };
+
+/// "Just now", "5m ago", "2h ago", "Yesterday", then the short day.
+String formatAgo(DateTime d, {DateTime? now}) {
+  final n = now ?? DateTime.now();
+  final diff = n.difference(d);
+  if (diff.inMinutes < 1) return 'Just now';
+  if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+  final today = DateTime(n.year, n.month, n.day);
+  if (!d.isBefore(today)) return '${diff.inHours}h ago';
+  if (!d.isBefore(today.subtract(const Duration(days: 1)))) return 'Yesterday';
+  return formatShortDay(d);
+}
+
+/// "2026-11-21", the date format the CRM's filters take.
+String apiDate(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';

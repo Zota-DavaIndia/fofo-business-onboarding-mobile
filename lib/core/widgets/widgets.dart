@@ -525,3 +525,122 @@ class ActionBar extends StatelessWidget {
     );
   }
 }
+
+/// Two or three tabs in one rounded track, the selected one raised on a card. Optional counts follow the label.
+class SegmentedTabs<T> extends StatelessWidget {
+  const SegmentedTabs({
+    super.key,
+    required this.values,
+    required this.selected,
+    required this.label,
+    required this.onSelect,
+  });
+
+  final List<T> values;
+  final T selected;
+  final String Function(T) label;
+  final ValueChanged<T> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(color: context.fieldFill, borderRadius: BorderRadius.circular(Radii.control)),
+      child: Row(
+        children: [
+          for (final v in values)
+            Expanded(
+              child: Semantics(
+                button: true,
+                selected: v == selected,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onSelect(v),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: v == selected ? c.card : null,
+                      borderRadius: BorderRadius.circular(Radii.control - 3),
+                    ),
+                    child: Text(
+                      label(v),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.text.label.copyWith(
+                        color: v == selected ? c.textPrimary : c.textSecondary,
+                        fontWeight: v == selected ? FontWeight.w600 : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A small ring filled to [percent] (0–100) with the number inside.
+class ProgressRing extends StatelessWidget {
+  const ProgressRing(this.percent, {super.key, this.size = 36, this.color});
+
+  final int percent;
+  final double size;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final p = percent.clamp(0, 100);
+    return Semantics(
+      label: '$p% done',
+      excludeSemantics: true,
+      child: SizedBox.square(
+        dimension: size,
+        child: CustomPaint(
+          painter: _RingPainter(p / 100, color ?? c.accent, c.separator),
+          child: Center(
+            child: Text('$p%', style: context.text.caption.copyWith(fontSize: 9, color: c.textSecondary)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RingPainter extends CustomPainter {
+  _RingPainter(this.value, this.color, this.track);
+
+  final double value;
+  final Color color;
+  final Color track;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const stroke = 3.0;
+    final rect = (Offset.zero & size).deflate(stroke / 2);
+    final base = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..color = track;
+    canvas.drawArc(rect, 0, 6.2832, false, base);
+    if (value > 0) {
+      canvas.drawArc(
+        rect,
+        -1.5708,
+        6.2832 * value,
+        false,
+        base
+          ..color = color
+          ..strokeCap = StrokeCap.round,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) => old.value != value || old.color != color || old.track != track;
+}

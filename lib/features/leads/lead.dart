@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/session.dart';
+import '../../core/format.dart';
 import '../../core/sync/live_refresh.dart';
 
 /// A lead from `/leads` or `/leads/{id}`. Labels come from the server.
@@ -50,6 +51,10 @@ class Lead {
     this.closeReason,
     this.sources = const [],
     this.lastVisit,
+    this.isNew = false,
+    this.progress,
+    this.lastUpdateBy,
+    this.lastUpdateAt,
   });
 
   final int id;
@@ -102,6 +107,14 @@ class Lead {
   /// Every enquiry that reached this lead, newest first.
   final List<LeadSource> sources;
   final LastVisit? lastVisit;
+
+  /// Not worked on yet: never called, or assigned with no visit.
+  final bool isNew;
+
+  /// 0–100: how far along the funnel, or through onboarding once qualified. Null for closed leads.
+  final int? progress;
+  final String? lastUpdateBy;
+  final DateTime? lastUpdateAt;
 
   bool allows(String action) => allowedActions.contains(action);
 
@@ -164,6 +177,12 @@ class Lead {
     lastVisit: j['last_visit'] is Map<String, dynamic>
         ? LastVisit.fromJson(j['last_visit'] as Map<String, dynamic>)
         : null,
+    isNew: j['is_new'] == true,
+    progress: (j['progress'] as num?)?.toInt(),
+    lastUpdateBy: j['last_update'] is Map && (j['last_update'] as Map)['by'] is Map
+        ? str(((j['last_update'] as Map)['by'] as Map)['name'])
+        : null,
+    lastUpdateAt: j['last_update'] is Map ? date((j['last_update'] as Map)['at']) : null,
   );
 }
 
@@ -247,18 +266,29 @@ class LastCall {
 }
 
 class OnboardingSummary {
-  const OnboardingSummary({required this.id, this.number, this.status, this.waitingFor});
+  const OnboardingSummary({
+    required this.id,
+    this.number,
+    this.status,
+    this.statusLabel,
+    this.waitingFor,
+    this.progress,
+  });
 
   final int id;
   final String? number;
   final String? status;
+  final String? statusLabel;
   final String? waitingFor;
+  final int? progress;
 
   factory OnboardingSummary.fromJson(Map<String, dynamic> j) => OnboardingSummary(
     id: (j['id'] as num).toInt(),
     number: str(j['onboarding_no']),
     status: str(j['status']),
+    statusLabel: str(j['status_label']),
     waitingFor: str(j['waiting_for']),
+    progress: (j['progress'] as num?)?.toInt(),
   );
 }
 
@@ -291,14 +321,58 @@ String? str(Object? v) {
 
 DateTime? date(Object? v) => v == null ? null : DateTime.tryParse('$v')?.toLocal();
 
-/// The filter chips on the Leads tab. Status filters match the Home counts.
+/// The filter sheet: enquiry dates and one status.
+class LeadRefine {
+  const LeadRefine({this.from, this.to, this.status});
+
+  final DateTime? from;
+  final DateTime? to;
+  final String? status;
+
+  bool get isEmpty => from == null && to == null && status == null;
+
+  Map<String, String> get query => {
+    if (from != null) 'from': apiDate(from!),
+    if (to != null) 'to': apiDate(to!),
+    'status': ?status,
+  };
+}
+
+class LeadRefineNotifier extends Notifier<LeadRefine> {
+  @override
+  LeadRefine build() => const LeadRefine();
+
+  void set(LeadRefine refine) => state = refine;
+}
+
+final leadRefineProvider = NotifierProvider<LeadRefineNotifier, LeadRefine>(LeadRefineNotifier.new);
+
+/// The two tabs of the Leads screen. Opportunities are qualified leads, on their way through onboarding.
+enum LeadTab {
+  leads('lead', 'Leads'),
+  opportunities('opportunity', 'Opportunities');
+
+  const LeadTab(this.query, this.label);
+
+  final String query;
+  final String label;
+}
+
+class LeadTabNotifier extends Notifier<LeadTab> {
+  @override
+  LeadTab build() => LeadTab.leads;
+
+  void set(LeadTab tab) => state = tab;
+}
+
+final leadTabProvider = NotifierProvider<LeadTabNotifier, LeadTab>(LeadTabNotifier.new);
+
+/// Quick filters on the Leads tab.
 enum LeadFilter {
   all('All', {}),
-  assigned('Assigned', {'status': 'ASSIGNED'}),
-  visitScheduled('Visit scheduled', {'status': 'VISIT_SCHEDULED'}),
-  followUp('Follow-up', {'status': 'FOLLOW_UP'}),
-  qualified('Qualified', {'status': 'QUALIFIED'}),
-  closed('Closed', {'queue': 'closed'});
+  todayCalls("Today's calls", {'queue': 'today_calls'}),
+  fresh('New', {'queue': 'new'}),
+  archived('Archived', {'queue': 'closed'});
 
   const LeadFilter(this.label, this.query);
 
@@ -337,24 +411,44 @@ class LeadQueueNotifier extends Notifier<LeadQueue?> {
 
 final leadQueueProvider = NotifierProvider<LeadQueueNotifier, LeadQueue?>(LeadQueueNotifier.new);
 
-/// The user's leads for the current filter and search. The server only
+/// One page of the Leads screen: the rows, and how many leads and opportunities match the search and dates.
+class LeadPage {
+  const LeadPage(this.items, {this.counts = const {}});
+
+  final List<Lead> items;
+  final Map<LeadTab, int> counts;
+}
+
+/// The user's leads for the current tab, filters and search. The server only
 /// returns leads in the user's scope.
-final leadsProvider = FutureProvider.autoDispose<List<Lead>>((ref) async {
+final leadsProvider = FutureProvider.autoDispose<LeadPage>((ref) async {
   ref.watch(liveSignalProvider(LiveTopic.leads));
+  final tab = ref.watch(leadTabProvider);
   final filter = ref.watch(leadFilterProvider);
   final queue = ref.watch(leadQueueProvider);
+  final refine = ref.watch(leadRefineProvider);
   final search = ref.watch(leadSearchProvider);
   final res = await ref
       .watch(apiClientProvider)
       .get<List<dynamic>>(
         '/leads',
         query: {
-          ...queue == null ? filter.query : {'queue': queue.queue},
+          'tab': tab.query,
+          if (queue != null) 'queue': queue.queue else if (tab == LeadTab.leads) ...filter.query,
+          ...refine.query,
           if (search.isNotEmpty) 'q': search,
           'per_page': 100,
         },
       );
-  return [for (final l in res.data) Lead.fromJson(l as Map<String, dynamic>)];
+  final counts = res.meta?['tab_counts'];
+  return LeadPage(
+    [for (final l in res.data) Lead.fromJson(l as Map<String, dynamic>)],
+    counts: {
+      if (counts is Map)
+        for (final t in LeadTab.values)
+          if (counts[t.query] is num) t: (counts[t.query] as num).toInt(),
+    },
+  );
 });
 
 final leadProvider = FutureProvider.autoDispose.family<Lead, int>((ref, id) async {

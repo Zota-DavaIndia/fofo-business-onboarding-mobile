@@ -33,6 +33,8 @@ void openTarget(BuildContext context, WidgetRef ref, HomeTarget target, {String?
   switch (target) {
     case LeadsTarget(:final queue):
       ref.read(leadQueueProvider.notifier).set((queue: queue, label: label ?? queue.replaceAll('_', ' ')));
+      ref.read(leadRefineProvider.notifier).set(const LeadRefine());
+      ref.read(leadTabProvider.notifier).set(queue == 'qualified' ? LeadTab.opportunities : LeadTab.leads);
       context.go('/leads');
     case OnboardingsTarget(:final tab):
       ref
@@ -252,9 +254,11 @@ class _Headline extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    void leads(LeadFilter f) {
+    void leads(LeadTab tab) {
       ref.read(leadQueueProvider.notifier).set(null);
-      ref.read(leadFilterProvider.notifier).set(f);
+      ref.read(leadRefineProvider.notifier).set(const LeadRefine());
+      ref.read(leadFilterProvider.notifier).set(LeadFilter.all);
+      ref.read(leadTabProvider.notifier).set(tab);
       context.go('/leads');
     }
 
@@ -264,7 +268,7 @@ class _Headline extends ConsumerWidget {
         value: '${d.total}',
         icon: AppIcons.leads,
         tone: StatTone.lavender,
-        onTap: () => leads(LeadFilter.all),
+        onTap: () => leads(LeadTab.leads),
       ),
       StatCard(
         label: 'Qualified',
@@ -272,7 +276,7 @@ class _Headline extends ConsumerWidget {
         caption: '${d.conversionPct}% · ${d.qualifiedThisMonth} this month',
         icon: AppIcons.check,
         tone: StatTone.teal,
-        onTap: () => leads(LeadFilter.qualified),
+        onTap: () => leads(LeadTab.opportunities),
       ),
       StatCard(
         label: 'Onboarding: your action',
